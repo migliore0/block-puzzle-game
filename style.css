@@ -1,0 +1,12 @@
+html,body{
+margin:0;
+padding:0;
+background:#1b1b1b;
+height:100%;
+touch-action:none;
+font-family:-apple-system,BlinkMacSystemFont,Arial;
+}
+canvas{
+display:block;
+margin:0 auto;
+}
