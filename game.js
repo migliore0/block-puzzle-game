@@ -1,48 +1,47 @@
 const c=document.getElementById("game"),ctx=c.getContext("2d")
-c.width=360;c.height=640
+
+const DPR=window.devicePixelRatio||1
+const W=360,H=640
+c.style.width=W+"px"
+c.style.height=H+"px"
+c.width=W*DPR
+c.height=H*DPR
+ctx.scale(DPR,DPR)
 
 const G=8,S=42
-const FX=(360-G*S)/2,FY=140
-const IDLE_SCALE=0.88,DRAG_SCALE=1
-const FOLLOW=0.85
+const FX=(W-G*S)/2,FY=130
+const IDLE_SCALE=0.82,DRAG_SCALE=1
+const FOLLOW=0.75
 
 const COLORS=["#F28B82","#F7D046","#A7C7E7","#A8D5BA","#C3AED6","#F5B971"]
 
-const SHAPES={
-  small:[
-    [[0,0]],
-    [[0,0],[1,0]]
-  ],
-  medium:[
-    [[0,0],[1,0],[2,0]],
-    [[0,0],[0,1],[1,0],[1,1]],
-    [[0,0],[0,1],[0,2]],
-    [[0,0],[1,0],[0,1]]
-  ],
-  big:[
-    [[0,0],[1,0],[2,0],[3,0]],
-    [[0,0],[1,0],[2,0],[0,1],[1,1],[2,1]],
-    [[0,0],[1,0],[2,0],[1,1]]
-  ]
-}
+const SHAPES=[
+  [[0,0]],
+  [[0,0],[1,0]],
+  [[0,0],[1,0],[2,0]],
+  [[0,0],[1,0],[2,0],[3,0]],
+  [[0,0],[0,1],[1,0],[1,1]],
+  [[0,0],[0,1],[0,2]],
+  [[0,0],[1,0],[0,1]],
+  [[0,0],[1,0],[2,0],[1,1]],
+  [[0,0],[1,0],[2,0],[2,1]],
+  [[0,0],[0,1],[1,1],[2,1]]
+]
 
-let field=Array.from({length:G},()=>Array(G).fill(null))
-let figures=[],drag=null,preview=[]
-let score=0,best=+localStorage.best||0
-let audioCtx=null
-let lastShapes=[]
+let field=[]
+let figures=[]
+let drag=null
+let preview=[]
+let score=0
+let best=+localStorage.best||0
+let gameOver=false
 
-function initAudio(){
-  if(audioCtx)return
-  audioCtx=new (window.AudioContext||window.webkitAudioContext)()
-}
-function play(f=400,d=0.06,t="triangle",v=0.15){
-  if(!audioCtx)return
-  const o=audioCtx.createOscillator(),g=audioCtx.createGain()
-  o.type=t;o.frequency.value=f
-  g.gain.value=v
-  o.connect(g);g.connect(audioCtx.destination)
-  o.start();o.stop(audioCtx.currentTime+d)
+function resetGame(){
+  field=Array.from({length:G},()=>Array(G).fill(null))
+  figures=[]
+  score=0
+  gameOver=false
+  spawnPack()
 }
 
 function rr(x,y,w,h,r){
@@ -73,67 +72,73 @@ function drawBlock(x,y,col){
 
 function shapeBounds(shape){
   let w=0,h=0
-  shape.forEach(b=>{w=Math.max(w,b[0]);h=Math.max(h,b[1])})
+  shape.forEach(p=>{w=Math.max(w,p[0]);h=Math.max(h,p[1])})
   return {w:w+1,h:h+1}
 }
 
-function fits(shape){
-  let r=[]
+function canPlace(shape){
   for(let y=0;y<G;y++)for(let x=0;x<G;x++){
-    if(shape.every(b=>{
-      let nx=x+b[0],ny=y+b[1]
+    if(shape.every(p=>{
+      let nx=x+p[0],ny=y+p[1]
       return nx>=0&&ny>=0&&nx<G&&ny<G&&!field[ny][nx]
-    }))r.push([x,y])
+    }))return true
   }
-  return r
+  return false
 }
 
-function fillRate(){
-  let f=0
-  for(let y=0;y<G;y++)for(let x=0;x<G;x++)if(field[y][x])f++
-  return f/(G*G)
+function hasMoves(){
+  return figures.some(f=>canPlace(f.shape))
 }
 
-function pickShape(){
-  let fill=fillRate()
-  let pool=fill<0.35?SHAPES.big:fill<0.65?[...SHAPES.medium,...SHAPES.big]:SHAPES.small
-  pool=pool.filter(s=>!lastShapes.includes(s))
-  let s=pool[Math.random()*pool.length|0]
-  lastShapes.push(s)
-  if(lastShapes.length>3)lastShapes.shift()
-  return s
-}
-
-function spawnThree(){
+function spawnPack(){
   figures=[]
+  const baseY=H-130
+  const gap=110
   for(let i=0;i<3;i++){
-    let sh=pickShape()
-    let b=shapeBounds(sh)
+    let sh=SHAPES[Math.random()*SHAPES.length|0]
     figures.push({
       shape:sh,
       color:COLORS[Math.random()*COLORS.length|0],
-      x:60+i*120,
-      y:560-b.h*S*IDLE_SCALE,
-      tx:60+i*120,
-      ty:560-b.h*S*IDLE_SCALE,
+      x:W/2-gap+i*gap,
+      y:baseY,
+      tx:W/2-gap+i*gap,
+      ty:baseY,
       scale:IDLE_SCALE
     })
   }
-  play(520,0.05)
 }
 
 function place(fig,gx,gy){
-  fig.shape.forEach(b=>field[gy+b[1]][gx+b[0]]={c:fig.color})
+  fig.shape.forEach(p=>field[gy+p[1]][gx+p[0]]={c:fig.color})
   score+=fig.shape.length*10
   if(score>best){best=score;localStorage.best=best}
-  play(320,0.05,"square",0.2)
+}
+
+function drawGameOver(){
+  ctx.fillStyle="rgba(0,0,0,.6)"
+  ctx.fillRect(0,0,W,H)
+
+  ctx.fillStyle="#fff"
+  ctx.textAlign="center"
+  ctx.font="700 36px Arial"
+  ctx.fillText("Game Over",W/2,260)
+
+  ctx.font="16px Arial"
+  ctx.fillText("Score "+score,W/2,300)
+
+  rr(W/2-80,330,160,44,14)
+  ctx.fillStyle="#1f1f1f"
+  ctx.fill()
+  ctx.fillStyle="#fff"
+  ctx.font="18px Arial"
+  ctx.fillText("Restart",W/2,360)
 }
 
 function draw(){
-  ctx.clearRect(0,0,c.width,c.height)
+  ctx.clearRect(0,0,W,H)
 
   ctx.fillStyle="#111"
-  rr(FX-12,FY-12,G*S+24,G*S+24,20)
+  rr(FX-14,FY-14,G*S+28,G*S+28,22)
   ctx.fill()
 
   for(let y=0;y<G;y++)for(let x=0;x<G;x++)
@@ -141,7 +146,7 @@ function draw(){
 
   preview.forEach(p=>{
     ctx.globalAlpha=0.5
-    drawBlock(FX+p[0]*S,FY+p[1]*S,"#ffffff")
+    drawBlock(FX+p[0]*S,FY+p[1]*S,"#fff")
     ctx.globalAlpha=1
   })
 
@@ -153,9 +158,13 @@ function draw(){
   ctx.fillStyle="#fff"
   ctx.font="600 34px Arial"
   ctx.textAlign="center"
-  ctx.fillText(score,c.width/2,80)
+  ctx.fillText(score,W/2,70)
   ctx.font="14px Arial"
-  ctx.fillText("BEST "+best,c.width/2,105)
+  ctx.fillText("BEST "+best,W/2,95)
+
+  ctx.font="24px Arial"
+  ctx.textAlign="right"
+  ctx.fillText("⚙️",W-20,36)
 
   figures.forEach(f=>{
     f.x+=(f.tx-f.x)*FOLLOW
@@ -168,45 +177,56 @@ function draw(){
     f.shape.forEach(p=>drawBlock(p[0]*S,p[1]*S,f.color))
     ctx.restore()
   })
+
+  if(gameOver)drawGameOver()
 }
 
 c.onpointerdown=e=>{
-  initAudio()
-  let r=c.getBoundingClientRect(),mx=e.clientX-r.left,my=e.clientY-r.top
+  let r=c.getBoundingClientRect()
+  let mx=e.clientX-r.left,my=e.clientY-r.top
+
+  if(gameOver){
+    if(mx>W/2-80&&mx<W/2+80&&my>330&&my<374)resetGame()
+    return
+  }
+
+  if(mx>W-50&&my<50){resetGame();return}
+
   figures.forEach(f=>{
     let b=shapeBounds(f.shape)
     if(mx>f.x&&mx<f.x+b.w*S&&my>f.y&&my<f.y+b.h*S){
       drag={f}
       f.scale=DRAG_SCALE
-      play(600,0.03)
     }
   })
 }
 
 c.onpointermove=e=>{
-  if(!drag)return
-  let r=c.getBoundingClientRect(),mx=e.clientX-r.left,my=e.clientY-r.top
+  if(!drag||gameOver)return
+  let r=c.getBoundingClientRect()
+  let mx=e.clientX-r.left,my=e.clientY-r.top
   drag.f.tx=mx-S
-  drag.f.ty=my-S*2.2
+  drag.f.ty=my-S*2
   preview=[]
-  let gx=Math.round((drag.f.tx-FX)/S),gy=Math.round((drag.f.ty-FY)/S)
-  if(fits(drag.f.shape).some(p=>p[0]==gx&&p[1]==gy))
+  let gx=Math.round((drag.f.tx-FX)/S)
+  let gy=Math.round((drag.f.ty-FY)/S)
+  if(canPlace(drag.f.shape))
     drag.f.shape.forEach(b=>preview.push([gx+b[0],gy+b[1]]))
 }
 
 c.onpointerup=()=>{
-  if(!drag)return
+  if(!drag||gameOver)return
   let f=drag.f
-  let gx=Math.round((f.x-FX)/S),gy=Math.round((f.y-FY)/S)
-  if(fits(f.shape).some(p=>p[0]==gx&&p[1]==gy)){
+  let gx=Math.round((f.x-FX)/S)
+  let gy=Math.round((f.y-FY)/S)
+  if(canPlace(f.shape)){
     place(f,gx,gy)
     figures=figures.filter(q=>q!==f)
-    if(figures.length===0)spawnThree()
-  }else{
-    let b=shapeBounds(f.shape)
-    f.ty=560-b.h*S*IDLE_SCALE
-    f.scale=IDLE_SCALE
-  }
+    if(figures.length===0){
+      spawnPack()
+      if(!hasMoves())gameOver=true
+    }
+  }else f.scale=IDLE_SCALE
   drag=null
   preview=[]
 }
@@ -216,5 +236,5 @@ function loop(){
   requestAnimationFrame(loop)
 }
 
-spawnThree()
+resetGame()
 loop()
