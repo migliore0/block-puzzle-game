@@ -1,19 +1,7 @@
-<canvas id="game"></canvas>
-
-<style>
-html,body{
-  margin:0;
-  padding:0;
-  background:#F2F4F8;
-  display:flex;
-  justify-content:center;
-}
-canvas{display:block}
-</style>
-
-<script>
 const c=document.getElementById("game")
+if(!c){ alert("canvas #game не найден. Проверь index.html"); throw new Error("no canvas") }
 const ctx=c.getContext("2d")
+if(!ctx){ alert("Не удалось получить 2D контекст"); throw new Error("no ctx") }
 
 c.width=360
 c.height=640
@@ -64,20 +52,31 @@ let score=0
 let visualScore=0
 let best=+localStorage.best||0
 let paused=false
+
 let audioCtx=null
+let audioReady=false
 
-function vibrate(ms){ if(navigator.vibrate) navigator.vibrate(ms) }
+function ensureAudio(){
+  if(audioReady) return
+  audioReady=true
+  audioCtx=new (window.AudioContext||window.webkitAudioContext)()
+}
 
-function sound(freq=300, dur=0.06){
-  if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)()
+function vibrate(ms){ try{ if(navigator.vibrate) navigator.vibrate(ms) }catch(e){} }
+
+function sound(freq=320, dur=0.06, vol=0.08){
+  if(!audioCtx) return
+  const t=audioCtx.currentTime
   const o=audioCtx.createOscillator()
   const g=audioCtx.createGain()
-  o.frequency.value=freq
-  g.gain.value=0.08
+  o.type="sine"
+  o.frequency.setValueAtTime(freq,t)
+  g.gain.setValueAtTime(vol,t)
+  g.gain.exponentialRampToValueAtTime(0.0001,t+dur)
   o.connect(g)
   g.connect(audioCtx.destination)
-  o.start()
-  o.stop(audioCtx.currentTime+dur)
+  o.start(t)
+  o.stop(t+dur)
 }
 
 function bounds(s){
@@ -86,30 +85,124 @@ function bounds(s){
   return {w:w+1,h:h+1}
 }
 
-function canPlace(s,gx,gy){
+function canPlaceOn(f,s,gx,gy){
   return s.every(b=>{
     let x=gx+b[0],y=gy+b[1]
-    return x>=0&&y>=0&&x<GRID&&y<GRID&&!field[y][x]
+    return x>=0&&y>=0&&x<GRID&&y<GRID&&!f[y][x]
   })
 }
 
-function anyFits(s){
+function anyFitsOn(f,s){
   for(let y=0;y<GRID;y++)
     for(let x=0;x<GRID;x++)
-      if(canPlace(s,x,y)) return true
+      if(canPlaceOn(f,s,x,y)) return true
   return false
 }
 
-function pickSmartShape(){
-  let pool=SHAPES.filter(s=>anyFits(s))
+function cloneField(src){
+  return src.map(r=>r.slice())
+}
+
+function placeOn(f,s,x,y){
+  s.forEach(b=>{ f[y+b[1]][x+b[0]]=1 })
+}
+
+function anyMoveOn(f,shapes){
+  for(let s of shapes){
+    for(let y=0;y<GRID;y++){
+      for(let x=0;x<GRID;x++){
+        if(canPlaceOn(f,s,x,y)) return true
+      }
+    }
+  }
+  return false
+}
+
+function bestMoveExists(f,shapes){
+  for(let s of shapes){
+    for(let y=0;y<GRID;y++){
+      for(let x=0;x<GRID;x++){
+        if(canPlaceOn(f,s,x,y)){
+          let nf=cloneField(f)
+          placeOn(nf,s,x,y)
+          if(anyMoveOn(nf,shapes)) return true
+        }
+      }
+    }
+  }
+  return false
+}
+
+function fillRatio(){
+  let cnt=0
+  for(let y=0;y<GRID;y++)for(let x=0;x<GRID;x++) if(field[y][x]) cnt++
+  return cnt/(GRID*GRID)
+}
+
+let shapeHistory=[]
+
+function fitsAnywhere(s){
+  return anyFitsOn(field,s)
+}
+
+function pickCandidateShapes(){
+  let fill=fillRatio()
+  let pool=SHAPES.filter(s=>fitsAnywhere(s))
   if(!pool.length) pool=[SHAPES[0]]
-  return pool[Math.random()*pool.length|0]
+
+  pool=pool.filter(s=>!shapeHistory.includes(s) || Math.random()<0.25)
+
+  let nearLose=fill>0.78
+  if(nearLose){
+    pool=pool.slice().sort((a,b)=>{
+      let sa=bounds(a).w*bounds(a).h
+      let sb=bounds(b).w*bounds(b).h
+      return sa-sb
+    }).slice(0,5)
+  }else{
+    pool=pool.filter(s=>{
+      let size=bounds(s).w*bounds(s).h
+      if(fill<0.35) return size>=4
+      if(fill<0.65) return size<=6
+      return size<=3
+    })
+    if(!pool.length) pool=SHAPES.filter(s=>fitsAnywhere(s))
+    if(!pool.length) pool=[SHAPES[0]]
+  }
+
+  return pool
+}
+
+function generateSmartSet(){
+  let attempts=0
+  while(attempts++<14){
+    let used=[]
+    let set=[]
+    for(let i=0;i<3;i++){
+      let pool=pickCandidateShapes()
+      let s
+      let guard=0
+      do{
+        s=pool[Math.random()*pool.length|0]
+      }while(used.includes(s) && guard++<20)
+      used.push(s)
+      set.push(s)
+    }
+
+    if(bestMoveExists(cloneField(field),set)){
+      shapeHistory.push(...set)
+      shapeHistory=shapeHistory.slice(-6)
+      return set
+    }
+  }
+  return [SHAPES[0],SHAPES[1],SHAPES[2]]
 }
 
 function spawnSet(){
   figures=[]
+  const set=generateSmartSet()
   for(let i=0;i<3;i++){
-    let s=pickSmartShape()
+    let s=set[i]
     let b=bounds(s)
     figures.push({
       shape:s,
@@ -131,8 +224,11 @@ function init(){
   field=Array.from({length:GRID},()=>Array(GRID).fill(null))
   figures=[]
   preview=[]
-  score=visualScore=0
+  dragging=null
+  score=0
+  visualScore=0
   paused=false
+  shapeHistory=[]
   spawnSet()
 }
 
@@ -158,6 +254,8 @@ function drawBlock(x,y,col){
   ctx.fill()
 }
 
+function clamp(v,a,b){ return Math.max(a,Math.min(b,v)) }
+
 function draw(){
   ctx.fillStyle=UI_BG
   ctx.fillRect(0,0,360,640)
@@ -174,32 +272,35 @@ function draw(){
     ctx.strokeStyle=GRID_CELL
     rr(FX+x*CELL,FY+y*CELL,CELL,CELL,8)
     ctx.stroke()
-    if(field[y][x])drawBlock(FX+x*CELL,FY+y*CELL,field[y][x])
+    if(field[y][x]) drawBlock(FX+x*CELL,FY+y*CELL,field[y][x])
   }
 
   preview.forEach(p=>{
     ctx.globalAlpha=.45
-    drawBlock(FX+p[0]*CELL,FY+p[1]*CELL,"#fff")
+    drawBlock(FX+p[0]*CELL,FY+p[1]*CELL,"#FFFFFF")
     ctx.globalAlpha=1
   })
 
   figures.forEach(f=>{
     f.x+=(f.tx-f.x)*0.8
+
     if(f.bounce){
       f.vy+=1.2
       f.y+=f.vy
       if(f.y>=f.ty){
         f.y=f.ty
         f.vy*=-0.4
-        if(Math.abs(f.vy)<0.8)f.bounce=false
+        if(Math.abs(f.vy)<0.8) f.bounce=false
       }
-    }else f.y+=(f.ty-f.y)*0.8
+    }else{
+      f.y+=(f.ty-f.y)*0.8
+    }
 
     let b=bounds(f.shape)
     ctx.save()
     ctx.translate(f.x+CELL*b.w/2,f.y+CELL*b.h/2)
     ctx.scale(f.scale,f.scale)
-    ctx.translate(-CELL*b.w/2,-CELL*b.h/2)
+    ctx.translate(-CELL*b.w/2,-CELL*b.h*CELL/2)
     f.shape.forEach(p=>drawBlock(p[0]*CELL,p[1]*CELL,f.color))
     ctx.restore()
   })
@@ -218,50 +319,81 @@ function draw(){
 }
 
 c.onpointerdown=e=>{
+  ensureAudio()
+  if(audioCtx && audioCtx.state==="suspended") audioCtx.resume().catch(()=>{})
   let r=c.getBoundingClientRect()
   let mx=e.clientX-r.left,my=e.clientY-r.top
+
   figures.forEach(f=>{
     let b=bounds(f.shape)
     if(mx>f.x&&mx<f.x+b.w*CELL&&my>f.y&&my<f.y+b.h*CELL){
       dragging=f
       f.scale=1
-      sound(500)
-      vibrate(10)
+      sound(520,0.05,0.07)
+      vibrate(8)
     }
   })
 }
 
 c.onpointermove=e=>{
-  if(!dragging||paused)return
+  if(!dragging||paused) return
   let r=c.getBoundingClientRect()
-  dragging.tx=e.clientX-r.left-CELL
-  dragging.ty=e.clientY-r.top-CELL*DRAG_OFFSET_Y
+
+  let tx=e.clientX-r.left-CELL
+  let ty=e.clientY-r.top-CELL*DRAG_OFFSET_Y
+
+  let b=bounds(dragging.shape)
+  tx=clamp(tx, 0, 360-b.w*CELL)
+  ty=clamp(ty, 0, 640-b.h*CELL)
+
+  dragging.tx=tx
+  dragging.ty=ty
+
   preview=[]
-  let gx=Math.round((dragging.tx-FX)/CELL)
-  let gy=Math.round((dragging.ty-FY)/CELL)
-  if(canPlace(dragging.shape,gx,gy))
-    dragging.shape.forEach(b=>preview.push([gx+b[0],gy+b[1]]))
+  let gx=(dragging.tx-FX)/CELL
+  let gy=(dragging.ty-FY)/CELL
+
+  let rx=Math.round(gx)
+  let ry=Math.round(gy)
+
+  let dx=Math.abs(gx-rx)
+  let dy=Math.abs(gy-ry)
+  if(dx<=SNAP_DIST) gx=rx
+  if(dy<=SNAP_DIST) gy=ry
+
+  let igx=Math.round(gx)
+  let igy=Math.round(gy)
+
+  if(canPlaceOn(field,dragging.shape,igx,igy)){
+    dragging.tx=FX+igx*CELL
+    dragging.ty=FY+igy*CELL
+    dragging.shape.forEach(p=>preview.push([igx+p[0],igy+p[1]]))
+  }
 }
 
 c.onpointerup=()=>{
-  if(!dragging||paused)return
+  if(!dragging||paused) return
   let f=dragging
+
   let gx=Math.round((f.tx-FX)/CELL)
   let gy=Math.round((f.ty-FY)/CELL)
-  if(canPlace(f.shape,gx,gy)){
-    f.shape.forEach(b=>field[gy+b[1]][gx+b[0]]=f.color)
+
+  if(canPlaceOn(field,f.shape,gx,gy)){
+    f.shape.forEach(b=> field[gy+b[1]][gx+b[0]]=f.color )
     score+=f.shape.length*10
     best=Math.max(best,score)
     localStorage.best=best
-    sound(220)
-    vibrate(20)
+    sound(240,0.06,0.08)
+    vibrate(14)
     figures=figures.filter(x=>x!==f)
-    if(!figures.length)spawnSet()
+    if(!figures.length) spawnSet()
   }else{
     let b=bounds(f.shape)
-    f.ty=560-b.h*CELL
+    f.tx=f.homeX
+    f.ty=f.homeY
     f.scale=0.9
   }
+
   dragging=null
   preview=[]
 }
@@ -273,4 +405,3 @@ function loop(){
 
 init()
 loop()
-</script>
