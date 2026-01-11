@@ -32,7 +32,6 @@ let paused=false
 let showMenu=false
 let showGameOver=false
 let canContinue=true
-let superFigure=null
 
 function init(){
 field=Array.from({length:GRID},()=>Array(GRID).fill(null))
@@ -47,7 +46,6 @@ paused=false
 showMenu=false
 showGameOver=false
 canContinue=true
-superFigure=null
 spawnSet()
 }
 
@@ -112,22 +110,27 @@ return false
 
 function spawnSet(){
 figures=[]
+const slots=[60,180,300]
 for(let i=0;i<3;i++){
 let s=SHAPES[Math.random()*SHAPES.length|0]
 let b=bounds(s)
+let w=b.w*CELL*0.9
+let h=b.h*CELL*0.9
 figures.push({
 shape:s,
 color:COLORS[Math.random()*COLORS.length|0],
-x:60+i*120,
-y:560-b.h*CELL*0.9,
-tx:60+i*120,
-ty:560-b.h*CELL*0.9,
+x:slots[i]-w/2,
+y:700,
+tx:slots[i]-w/2,
+ty:560-h,
+vy:0,
+bounce:true,
 scale:0.9
 })
 }
 }
 
-function spawnParticles(x,y,col,count=12){
+function spawnParticles(x,y,col,count=10){
 for(let i=0;i<count;i++){
 particles.push({
 x:x+CELL/2,
@@ -160,11 +163,12 @@ field[y][x]=null
 })
 score+=cleared>1?cleared*150:100
 comboText={t:"COMBO x"+cleared,a:60}
-sound(220+cleared*60,0.1,0.15)
+sound(220+cleared*60,0.12,0.16)
 }
 
 function draw(){
 ctx.clearRect(0,0,360,640)
+
 ctx.fillStyle="#111"
 rr(FX-14,FY-14,GRID*CELL+28,GRID*CELL+28,24)
 ctx.fill()
@@ -184,7 +188,17 @@ ctx.globalAlpha=1
 
 figures.forEach(f=>{
 f.x+=(f.tx-f.x)*0.8
+if(f.bounce){
+f.vy+=1.2
+f.y+=f.vy
+if(f.y>=f.ty){
+f.y=f.ty
+f.vy*=-0.45
+if(Math.abs(f.vy)<0.8){f.bounce=false;f.vy=0}
+}
+}else{
 f.y+=(f.ty-f.y)*0.8
+}
 let b=bounds(f.shape)
 ctx.save()
 ctx.translate(f.x+CELL*b.w/2,f.y+CELL*b.h/2)
@@ -194,7 +208,7 @@ f.shape.forEach(p=>drawBlock(p[0]*CELL,p[1]*CELL,f.color))
 ctx.restore()
 })
 
-visualScore+=(score-visualScore)*0.12
+visualScore+=(score-visualScore)*0.15
 ctx.fillStyle="#fff"
 ctx.font="600 36px Arial"
 ctx.textAlign="center"
@@ -211,8 +225,8 @@ if(comboText.a<=0)comboText=null
 }
 
 particles.forEach(p=>{
-ctx.fillStyle=p.c
 ctx.globalAlpha=p.life/30
+ctx.fillStyle=p.c
 ctx.fillRect(p.x,p.y,4,4)
 p.x+=p.vx
 p.y+=p.vy
@@ -220,14 +234,14 @@ p.vy+=0.15
 p.life--
 })
 particles=particles.filter(p=>p.life>0)
-
 ctx.globalAlpha=1
+
 ctx.font="26px Arial"
 ctx.textAlign="right"
 ctx.fillText("⚙",350,40)
 
 if(showMenu||showGameOver){
-ctx.fillStyle="rgba(0,0,0,0.75)"
+ctx.fillStyle="rgba(0,0,0,.75)"
 ctx.fillRect(0,0,360,640)
 ctx.fillStyle="#fff"
 ctx.textAlign="center"
@@ -268,9 +282,8 @@ showGameOver=false
 paused=false
 let y=Math.random()*GRID|0
 for(let x=0;x<GRID;x++)field[y][x]=null
-superFigure=[[0,0],[1,0],[2,0],[0,1],[1,1],[2,1],[0,2],[1,2],[2,2]]
 figures=[{
-shape:superFigure,
+shape:[[0,0],[1,0],[2,0],[0,1],[1,1],[2,1],[0,2],[1,2],[2,2]],
 color:COLORS[Math.random()*COLORS.length|0],
 x:120,y:520,tx:120,ty:520,scale:0.9
 }]
@@ -286,7 +299,7 @@ let b=bounds(f.shape)
 if(mx>f.x&&mx<f.x+b.w*CELL&&my>f.y&&my<f.y+b.h*CELL){
 dragging=f
 f.scale=1
-sound(500)
+sound(520)
 }
 })
 }
