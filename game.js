@@ -7,13 +7,15 @@ c.height = 640
 const GRID = 8
 const CELL = 42
 const FX = (360 - GRID * CELL) / 2
-const FY = 130
+const FY = 150
 const SPAWN_Y = 560
 
-const BG = "#17181B"
-const BOARD_BG = "#141518"
-const GRID_LINE = "rgba(255,255,255,0.06)"
-const FRAME_GLOW = "rgba(0,0,0,0.35)"
+const BG_TOP = "#BEBEBE"
+const BG_BOTTOM = "#B3B3B3"
+const FIELD_BG = "#3E3E3E"
+const FIELD_BG_DARK = "#353535"
+const GRID_LINE = "#2F2F2F"
+const FRAME = "#5A5A5A"
 
 const COLORS = [
   "#F48B82",
@@ -43,9 +45,35 @@ const SHAPES = [
 let field, figures, dragging, preview
 let score = 0, visualScore = 0
 let best = +localStorage.best || 0
+let particles = []
+let comboText = null
 let paused = false
 let showMenu = false
 let showGameOver = false
+
+function rr(x,y,w,h,r){
+  ctx.beginPath()
+  ctx.moveTo(x+r,y)
+  ctx.arcTo(x+w,y,x+w,y+h,r)
+  ctx.arcTo(x+w,y+h,x,y+h,r)
+  ctx.arcTo(x,y+h,x,y,r)
+  ctx.arcTo(x,y,x+w,y,r)
+  ctx.closePath()
+}
+
+function drawBlock(x,y,col){
+  ctx.fillStyle = "rgba(0,0,0,0.35)"
+  rr(x+2,y+4,CELL-4,CELL-4,8)
+  ctx.fill()
+
+  ctx.fillStyle = col
+  rr(x,y,CELL,CELL,8)
+  ctx.fill()
+
+  ctx.fillStyle = "rgba(255,255,255,0.35)"
+  rr(x+6,y+6,CELL-16,6,4)
+  ctx.fill()
+}
 
 function bounds(s){
   let w=0,h=0
@@ -55,14 +83,14 @@ function bounds(s){
 
 function canPlace(s,gx,gy){
   return s.every(b=>{
-    let x=gx+b[0], y=gy+b[1]
-    return x>=0 && y>=0 && x<GRID && y<GRID && !field[y][x]
+    let x=gx+b[0],y=gy+b[1]
+    return x>=0&&y>=0&&x<GRID&&y<GRID&&!field[y][x]
   })
 }
 
 function spawnSet(){
   figures=[]
-  const slots=[70,180,290]
+  const slots=[80,180,280]
   for(let i=0;i<3;i++){
     let s=SHAPES[Math.random()*SHAPES.length|0]
     let b=bounds(s)
@@ -77,18 +105,20 @@ function spawnSet(){
       y:700,
       tx:slots[i]-w/2,
       ty:SPAWN_Y-h,
-      scale:0.72,
-      idle:0.72,
-      active:1
+      scale:0.75,
+      idleScale:0.75,
+      dragScale:1
     })
   }
 }
 
 function init(){
-  field = Array.from({length:GRID},()=>Array(GRID).fill(null))
+  field=Array.from({length:GRID},()=>Array(GRID).fill(null))
   figures=[]
   dragging=null
   preview=[]
+  particles=[]
+  comboText=null
   score=0
   visualScore=0
   paused=false
@@ -97,52 +127,32 @@ function init(){
   spawnSet()
 }
 
-function rr(x,y,w,h,r){
-  ctx.beginPath()
-  ctx.moveTo(x+r,y)
-  ctx.arcTo(x+w,y,x+w,y+h,r)
-  ctx.arcTo(x+w,y+h,x,y+h,r)
-  ctx.arcTo(x,y+h,x,y,r)
-  ctx.arcTo(x,y,x+w,y,r)
-  ctx.closePath()
-}
-
-function drawBlock(x,y,col){
-  ctx.fillStyle="rgba(0,0,0,.4)"
-  rr(x+3,y+5,CELL-6,CELL-6,10)
-  ctx.fill()
-  ctx.fillStyle=col
-  rr(x,y,CELL-6,CELL-6,10)
-  ctx.fill()
-}
-
 function draw(){
-  ctx.fillStyle=BG
+  const g = ctx.createLinearGradient(0,0,0,640)
+  g.addColorStop(0,BG_TOP)
+  g.addColorStop(1,BG_BOTTOM)
+  ctx.fillStyle=g
   ctx.fillRect(0,0,360,640)
 
-  ctx.fillStyle=BOARD_BG
-  rr(FX-14,FY-14,GRID*CELL+28,GRID*CELL+28,26)
+  ctx.fillStyle=FIELD_BG
+  rr(FX-14,FY-14,GRID*CELL+28,GRID*CELL+28,22)
   ctx.fill()
 
-  ctx.strokeStyle=GRID_LINE
-  for(let y=0;y<GRID;y++)
-    for(let x=0;x<GRID;x++)
-      rr(FX+x*CELL,FY+y*CELL,CELL,CELL,10),ctx.stroke()
+  ctx.strokeStyle=FRAME
+  ctx.lineWidth=3
+  rr(FX-14,FY-14,GRID*CELL+28,GRID*CELL+28,22)
+  ctx.stroke()
 
-  for(let y=0;y<GRID;y++)
-    for(let x=0;x<GRID;x++)
-      if(field[y][x])
-        drawBlock(FX+x*CELL,FY+y*CELL,field[y][x])
-
-  preview.forEach(p=>{
-    ctx.globalAlpha=.45
-    drawBlock(FX+p[0]*CELL,FY+p[1]*CELL,"#fff")
-    ctx.globalAlpha=1
-  })
+  for(let y=0;y<GRID;y++)for(let x=0;x<GRID;x++){
+    ctx.strokeStyle=GRID_LINE
+    rr(FX+x*CELL,FY+y*CELL,CELL,CELL,8)
+    ctx.stroke()
+    if(field[y][x]) drawBlock(FX+x*CELL,FY+y*CELL,field[y][x])
+  }
 
   figures.forEach(f=>{
-    f.x+=(f.tx-f.x)*0.85
-    f.y+=(f.ty-f.y)*0.85
+    f.x+=(f.tx-f.x)*0.8
+    f.y+=(f.ty-f.y)*0.8
     let b=bounds(f.shape)
     ctx.save()
     ctx.translate(f.x+CELL*b.w/2,f.y+CELL*b.h/2)
@@ -152,54 +162,32 @@ function draw(){
     ctx.restore()
   })
 
-  visualScore+=(score-visualScore)*0.15
+  visualScore+=(score-visualScore)*0.12
   ctx.fillStyle="#fff"
-  ctx.font="600 36px Arial"
+  ctx.font="700 40px Arial"
   ctx.textAlign="center"
-  ctx.fillText(Math.floor(visualScore),180,80)
-  ctx.font="14px Arial"
-  ctx.fillText("BEST "+best,180,105)
+  ctx.fillText(Math.floor(visualScore),180,90)
+
+  ctx.fillStyle="#F5C542"
+  ctx.font="700 18px Arial"
+  ctx.textAlign="left"
+  ctx.fillText("👑 "+best,20,40)
 
   ctx.font="26px Arial"
   ctx.textAlign="right"
-  ctx.fillText("⚙",350,42)
-
-  if(showMenu||showGameOver){
-    ctx.fillStyle="rgba(0,0,0,.75)"
-    ctx.fillRect(0,0,360,640)
-    ctx.fillStyle="#fff"
-    ctx.textAlign="center"
-    ctx.font="700 32px Arial"
-    ctx.fillText(showGameOver?"GAME OVER":"PAUSE",180,220)
-    ctx.font="22px Arial"
-    ctx.fillText("🔁 Restart",180,320)
-    if(!showGameOver)ctx.fillText("✕ Close",180,370)
-  }
+  ctx.fillText("⚙",350,40)
 }
 
 c.onpointerdown=e=>{
   let r=c.getBoundingClientRect()
   let mx=e.clientX-r.left,my=e.clientY-r.top
-
-  if(mx>310&&my<60){
-    showMenu=true
-    paused=true
-    return
-  }
-
-  if(showMenu){
-    if(my>300&&my<340)init()
-    if(my>350&&my<390){showMenu=false;paused=false}
-    return
-  }
-
+  if(mx>310&&my<60){showMenu=!showMenu;paused=showMenu;return}
   if(paused)return
-
   figures.forEach(f=>{
     let b=bounds(f.shape)
     if(mx>f.x&&mx<f.x+b.w*CELL&&my>f.y&&my<f.y+b.h*CELL){
       dragging=f
-      f.scale=f.active
+      f.scale=f.dragScale
     }
   })
 }
@@ -207,37 +195,18 @@ c.onpointerdown=e=>{
 c.onpointermove=e=>{
   if(!dragging||paused)return
   let r=c.getBoundingClientRect()
-  dragging.tx=Math.max(0,Math.min(360-CELL,e.clientX-r.left-CELL/2))
-  dragging.ty=Math.max(100,Math.min(640-CELL,e.clientY-r.top-CELL))
-  preview=[]
-  let gx=Math.round((dragging.tx+CELL/2-FX)/CELL)
-  let gy=Math.round((dragging.ty+CELL/2-FY)/CELL)
-  if(canPlace(dragging.shape,gx,gy))
-    dragging.shape.forEach(b=>preview.push([gx+b[0],gy+b[1]]))
+  dragging.tx=Math.max(0,Math.min(360, e.clientX-r.left))-CELL
+  dragging.ty=Math.max(0,Math.min(640, e.clientY-r.top))-CELL*1.5
 }
 
 c.onpointerup=()=>{
-  if(!dragging||paused)return
-  let f=dragging
-  let gx=Math.round((f.tx+CELL/2-FX)/CELL)
-  let gy=Math.round((f.ty+CELL/2-FY)/CELL)
-  if(canPlace(f.shape,gx,gy)){
-    f.shape.forEach(b=>field[gy+b[1]][gx+b[0]]=f.color)
-    score+=f.shape.length*10
-    best=Math.max(best,score)
-    localStorage.best=best
-    figures=figures.filter(x=>x!==f)
-    if(figures.length===0)spawnSet()
-  }else{
-    f.tx=f.homeX
-    f.ty=f.homeY
-    f.scale=f.idle
-  }
+  if(!dragging)return
+  dragging.tx=dragging.homeX
+  dragging.ty=dragging.homeY
+  dragging.scale=dragging.idleScale
   dragging=null
-  preview=[]
 }
 
 function loop(){draw();requestAnimationFrame(loop)}
-
 init()
 loop()
