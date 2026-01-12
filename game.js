@@ -191,21 +191,20 @@ const FIGURE_Y = BOTTOM_AREA_Y + BOTTOM_AREA_H/2
 
 function spawnSet() {
   figures = []
-  let shapes = generatePredictiveSet()
+  const shapes = generatePredictiveSet()
 
-  const GAP = 18
+  const GAP = 24
   const BOARD_CENTER_X = FX + (GRID * CELL) / 2
 
-  let widths = shapes.map(s => bounds(s).w * CELL * FIGURE_IDLE_SCALE)
-  let heights = shapes.map(s => bounds(s).h * CELL * FIGURE_IDLE_SCALE)
+  const widths = shapes.map(s => bounds(s).w * CELL)
+  const heights = shapes.map(s => bounds(s).h * CELL)
 
-  let totalWidth = widths[0] + widths[1] + widths[2] + GAP * 2
-
-  let startX = BOARD_CENTER_X - totalWidth / 2
+  const totalWidth = widths[0] + widths[1] + widths[2] + GAP * 2
+  let x = BOARD_CENTER_X - totalWidth / 2
 
   for (let i = 0; i < 3; i++) {
-    let homeX = startX
-    let homeY = FIGURE_Y - heights[i] / 2
+    const homeX = x
+    const homeY = FIGURE_Y - heights[i] / 2
 
     figures.push({
       shape: shapes[i],
@@ -221,7 +220,7 @@ function spawnSet() {
       scale: FIGURE_IDLE_SCALE
     })
 
-    startX += widths[i] + GAP
+    x += widths[i] + GAP
   }
 }
 
