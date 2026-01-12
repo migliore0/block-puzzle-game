@@ -193,7 +193,7 @@ function spawnSet() {
   figures = []
   const shapes = generatePredictiveSet()
 
-  const SHIFT_LEFT = 25        // ← ВАЖНО: регулируй это число
+  const SHIFT_LEFT = 19        // ← ВАЖНО: регулируй это число
   const spacing = 120          // расстояние между фигурами
 
   for (let i = 0; i < 3; i++) {
