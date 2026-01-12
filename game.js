@@ -510,11 +510,11 @@ if (!anyMoves()) {
   paused = true
 
   if (window.Telegram && Telegram.WebApp) {
-    Telegram.WebApp.sendData(JSON.stringify({
-      type: 'score',
-      score: score
-    }))
-  }
+  Telegram.WebApp.sendData(JSON.stringify({
+    type: 'score',
+    score: score
+  }))
+  Telegram.WebApp.close()
 }
     sound(220)
     vibrate(20)
