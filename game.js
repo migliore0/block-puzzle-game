@@ -194,29 +194,26 @@ function spawnSet(){
   let shapes=generatePredictiveSet()
 
   const spacing = BASE_W / 3
-const GAP = 18
 
-let cx = spacing * (i + 0.5)
-let homeX = cx - (b.w * CELL * FIGURE_IDLE_SCALE) / 2
   for(let i=0;i<3;i++){
-    let s=shapes[i]
-    let b=bounds(s)
+    let s = shapes[i]
+    let b = bounds(s)
 
     let cx = spacing * (i + 1)
-    let homeX = cx - (b.w * CELL) / 2
-    let homeY = FIGURE_Y - (b.h * CELL) / 2
+    let homeX = cx - (b.w * CELL * FIGURE_IDLE_SCALE) / 2
+    let homeY = FIGURE_Y - (b.h * CELL * FIGURE_IDLE_SCALE) / 2
 
     figures.push({
-      shape:s,
-      color:COLORS[Math.random()*COLORS.length|0],
+      shape: s,
+      color: COLORS[Math.random()*COLORS.length|0],
       homeX,
       homeY,
-      x:homeX,
-      y:BASE_H + 140,
-      tx:homeX,
-      ty:homeY,
-      vy:0,
-      bounce:true,
+      x: homeX,
+      y: BASE_H + 140,
+      tx: homeX,
+      ty: homeY,
+      vy: 0,
+      bounce: true,
       scale: FIGURE_IDLE_SCALE
     })
   }
