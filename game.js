@@ -193,12 +193,13 @@ function spawnSet() {
   figures = []
   let shapes = generatePredictiveSet()
 
-  const CENTER_X = BASE_W / 2
+  const REAL_CENTER_X = BOARD_X + BOARD_W / 2
   const OFFSET_X = 120
+
   const POSITIONS = [
-    CENTER_X - OFFSET_X, // левая
-    CENTER_X,            // центр
-    CENTER_X + OFFSET_X  // правая
+    REAL_CENTER_X - OFFSET_X,
+    REAL_CENTER_X,
+    REAL_CENTER_X + OFFSET_X
   ]
 
   for (let i = 0; i < 3; i++) {
