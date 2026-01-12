@@ -13,6 +13,8 @@ function resize(){
   VIEW_W=window.innerWidth
   VIEW_H=window.innerHeight
   SCALE=Math.min(VIEW_W/BASE_W,VIEW_H/BASE_H)
+  const FIGURE_IDLE_SCALE = 0.75
+  const FIGURE_DRAG_SCALE = 1  
   c.style.width=VIEW_W+"px"
   c.style.height=VIEW_H+"px"
   c.width=VIEW_W*dpr
@@ -190,7 +192,7 @@ function spawnSet(){
       ty:homeY,
       vy:0,
       bounce:true,
-      scale:0.85
+      scale: FIGURE_IDLE_SCALE
     })
   }
 }
@@ -436,7 +438,7 @@ c.onpointerdown=e=>{
     let b=bounds(f.shape)
     if(x>f.x&&x<f.x+b.w*CELL&&y>f.y&&y<f.y+b.h*CELL){
       dragging=f
-      f.scale=1
+      f.scale = FIGURE_DRAG_SCALE
       sound(500)
       vibrate(10)
     }
@@ -485,7 +487,7 @@ c.onpointerup=()=>{
   }else{
     f.tx=f.homeX
     f.ty=f.homeY
-    f.scale=0.85
+    f.scale = FIGURE_IDLE_SCALE
   }
   dragging=null
   preview=[]
