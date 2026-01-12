@@ -189,19 +189,21 @@ const BOTTOM_AREA_Y = FY + GRID*CELL
 const BOTTOM_AREA_H = BASE_H - BOTTOM_AREA_Y
 const FIGURE_Y = BOTTOM_AREA_Y + BOTTOM_AREA_H/2
 
-function spawnSet(){
+function spawnSet() {
   figures = []
   let shapes = generatePredictiveSet()
 
-  const spacing = BASE_W / 3
+  const SLOT_COUNT = 3
+  const SLOT_WIDTH = BASE_W / SLOT_COUNT
+  const GAP_Y = 20
 
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < SLOT_COUNT; i++) {
     let s = shapes[i]
     let b = bounds(s)
 
-    let cx = spacing * (i + 1)
-    let homeX = cx - (b.w * CELL * FIGURE_IDLE_SCALE) / 2
-    let homeY = FIGURE_Y - (b.h * CELL * FIGURE_IDLE_SCALE) / 2
+    let slotCenterX = SLOT_WIDTH * i + SLOT_WIDTH / 2
+    let homeX = slotCenterX - (b.w * CELL * FIGURE_IDLE_SCALE) / 2
+    let homeY = FIGURE_Y - (b.h * CELL * FIGURE_IDLE_SCALE) / 2 + GAP_Y
 
     figures.push({
       shape: s,
