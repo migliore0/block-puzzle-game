@@ -129,41 +129,19 @@ function fillRatio(){
   return c/(GRID*GRID)
 }
 
-function shapeSize(s){
-  const b = bounds(s)
-  return b.w * b.h
-}
-
-function isBadShape(s){
-  const b = bounds(s)
-  return (
-    shapeSize(s) >= 6 ||     
-    b.w >= 4 ||             
-    b.h >= 4
-  )
-}
-
 function generatePredictiveSet(){
   let tries=0
   while(tries++<12){
     let set=[]
     let used=[]
     let fill=fillRatio()
-    const allowBadSet = Math.random() < 0.2 && fill < 0.75
-    let pool = SHAPES.filter(s=>{
-  for(let y=0;y<GRID;y++)
-    for(let x=0;x<GRID;x++)
-      if(canPlace(s,x,y)) return true
-  return false
-})
-
-if(allowBadSet){
-  pool = pool.filter(isBadShape)
-}
-
-if(!pool.length){
-  pool = SHAPES
-}
+    let pool=SHAPES.filter(s=>{
+      for(let y=0;y<GRID;y++)
+        for(let x=0;x<GRID;x++)
+          if(canPlace(s,x,y)) return true
+      return false
+    })
+    if(!pool.length) pool=[SHAPES[0]]
     pool=pool.filter(s=>!shapeHistory.includes(s)||Math.random()<0.3)
     if(fill>0.75){
       pool=pool.sort((a,b)=>bounds(a).w*bounds(a).h-bounds(b).w*bounds(b).h)
@@ -503,19 +481,8 @@ c.onpointerup=()=>{
     localStorage.best=best
     clearLines()
     figures=figures.filter(x=>x!==f)
-    if (!figures.length) spawnSet()
-
-if (!anyMoves()) {
-  showGameOver = true
-  paused = true
-
-  if (window.Telegram && Telegram.WebApp) {
-  Telegram.WebApp.sendData(JSON.stringify({
-    type: 'score',
-    score: score
-  }))
-  Telegram.WebApp.close()
-}
+    if(!figures.length) spawnSet()
+    if(!anyMoves()){showGameOver=true;paused=true}
     sound(220)
     vibrate(20)
   }else{
