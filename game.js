@@ -25,23 +25,16 @@ window.addEventListener("resize",resize)
 resize()
 
 const GRID=8
-const CELL=40
+const CELL=36
 const FX=(BASE_W-GRID*CELL)/2
-const FY=120
+const FY=110
 
 const UI_BG="#F2F4F8"
 const BOARD_BG="#E6EAF2"
 const GRID_CELL="#CBD3E1"
 const BOARD_FRAME="#9FA8DA"
 
-const COLORS=[
-"#FF8A80",
-"#FFD180",
-"#82B1FF",
-"#A7FFEB",
-"#B388FF",
-"#FFAB91"
-]
+const COLORS=["#FF8A80","#FFD180","#82B1FF","#A7FFEB","#B388FF","#FFAB91"]
 
 const SHAPES=[
 [[0,0]],
@@ -123,21 +116,17 @@ function pickSmart(){
 
 function spawnSet(){
   figures=[]
-  const slots=[70,180,290]
+  const slots=[60,150,240]
   for(let i=0;i<3;i++){
     let s=pickSmart()
     let b=bounds(s)
     figures.push({
       shape:s,
       color:COLORS[Math.random()*COLORS.length|0],
-      homeX:slots[i],
-      homeY:520-b.h*CELL,
       x:slots[i],
-      y:BASE_H+100,
+      y:FY+GRID*CELL+40,
       tx:slots[i],
-      ty:520-b.h*CELL,
-      vy:0,
-      bounce:true,
+      ty:FY+GRID*CELL+40,
       scale:0.85
     })
   }
@@ -219,11 +208,11 @@ function draw(){
   ctx.fillRect(0,0,BASE_W,BASE_H)
 
   ctx.fillStyle=BOARD_FRAME
-  rr(FX-16,FY-16,GRID*CELL+32,GRID*CELL+32,26)
+  rr(FX-14,FY-14,GRID*CELL+28,GRID*CELL+28,24)
   ctx.fill()
 
   ctx.fillStyle=BOARD_BG
-  rr(FX-8,FY-8,GRID*CELL+16,GRID*CELL+16,20)
+  rr(FX-8,FY-8,GRID*CELL+16,GRID*CELL+16,18)
   ctx.fill()
 
   for(let y=0;y<GRID;y++)for(let x=0;x<GRID;x++){
@@ -241,15 +230,7 @@ function draw(){
 
   figures.forEach(f=>{
     f.x+=(f.tx-f.x)*0.8
-    if(f.bounce){
-      f.vy+=1.2
-      f.y+=f.vy
-      if(f.y>=f.ty){
-        f.y=f.ty
-        f.vy*=-0.4
-        if(Math.abs(f.vy)<0.8) f.bounce=false
-      }
-    }else f.y+=(f.ty-f.y)*0.8
+    f.y+=(f.ty-f.y)*0.8
     let b=bounds(f.shape)
     ctx.save()
     ctx.translate(f.x+CELL*b.w/2,f.y+CELL*b.h/2)
@@ -263,14 +244,14 @@ function draw(){
   ctx.fillStyle="#333"
   ctx.font="600 36px Arial"
   ctx.textAlign="center"
-  ctx.fillText(Math.floor(visualScore),BASE_W/2,80)
+  ctx.fillText(Math.floor(visualScore),BASE_W/2,72)
   ctx.font="14px Arial"
-  ctx.fillText("BEST "+best,BASE_W/2,105)
+  ctx.fillText("BEST "+best,BASE_W/2,96)
 
   if(comboText){
     ctx.font="20px Arial"
     ctx.fillStyle="rgba(0,0,0,"+(comboText.a/60)+")"
-    ctx.fillText(comboText.t,BASE_W/2,140)
+    ctx.fillText(comboText.t,BASE_W/2,130)
     comboText.a--
     if(comboText.a<=0) comboText=null
   }
@@ -289,14 +270,14 @@ function draw(){
 
   ctx.font="26px Arial"
   ctx.textAlign="right"
-  ctx.fillText("⚙",BASE_W-10,36)
+  ctx.fillText("⚙",BASE_W-14,34)
 
   ctx.restore()
 }
 
 c.onpointerdown=e=>{
   let {x,y}=getPointer(e)
-  if(x>BASE_W-50&&y<50){paused=true;showMenu=true;return}
+  if(x>BASE_W-48&&y<48){paused=true;showMenu=true;return}
   figures.forEach(f=>{
     let b=bounds(f.shape)
     if(x>f.x&&x<f.x+b.w*CELL&&y>f.y&&y<f.y+b.h*CELL){
@@ -311,8 +292,8 @@ c.onpointerdown=e=>{
 c.onpointermove=e=>{
   if(!dragging||paused) return
   let {x,y}=getPointer(e)
-  dragging.tx=x-CELL
-  dragging.ty=y-CELL*2
+  dragging.tx=Math.max(0,Math.min(BASE_W-CELL,x-CELL))
+  dragging.ty=Math.max(FY,y-CELL*2)
   preview=[]
   let gx=Math.round((dragging.tx-FX)/CELL)
   let gy=Math.round((dragging.ty-FY)/CELL)
@@ -337,9 +318,9 @@ c.onpointerup=()=>{
     sound(220)
     vibrate(20)
   }else{
-    let b=bounds(f.shape)
-    f.ty=520-b.h*CELL
     f.scale=0.85
+    f.tx=f.x
+    f.ty=f.y
   }
   dragging=null
   preview=[]
