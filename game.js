@@ -191,26 +191,23 @@ const FIGURE_Y = BOTTOM_AREA_Y + BOTTOM_AREA_H/2
 
 function spawnSet() {
   figures = []
-  let shapes = generatePredictiveSet()
+  const shapes = generatePredictiveSet()
 
-  const REAL_CENTER_X = BOARD_X + BOARD_W / 2
-  const OFFSET_X = 120
-
-  const POSITIONS = [
-    REAL_CENTER_X - OFFSET_X,
-    REAL_CENTER_X,
-    REAL_CENTER_X + OFFSET_X
-  ]
+  const FIELD_CENTER_X = FX + (GRID * CELL) / 2
+  const OFFSETS = [-120, 0, 120] // слева — центр — справа
 
   for (let i = 0; i < 3; i++) {
-    let s = shapes[i]
-    let b = bounds(s)
+    const s = shapes[i]
+    const b = bounds(s)
 
-    let homeX =
-      POSITIONS[i] - (b.w * CELL * FIGURE_IDLE_SCALE) / 2
+    const homeX =
+      FIELD_CENTER_X +
+      OFFSETS[i] -
+      (b.w * CELL * FIGURE_IDLE_SCALE) / 2
 
-    let homeY =
-      FIGURE_Y - (b.h * CELL * FIGURE_IDLE_SCALE) / 2
+    const homeY =
+      FIGURE_Y -
+      (b.h * CELL * FIGURE_IDLE_SCALE) / 2
 
     figures.push({
       shape: s,
