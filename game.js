@@ -193,37 +193,31 @@ function spawnSet() {
   figures = []
   const shapes = generatePredictiveSet()
 
-  const CENTER_X = FX + (GRID * CELL) / 2
-  const GAP = 40 // расстояние между фигурами (визуально)
+  const EDGE_PADDING = 24   // одинаковый отступ от краёв экрана
+  const CENTER_X = BASE_W / 2
 
-  // сначала считаем bounds
   const boundsArr = shapes.map(s => bounds(s))
 
-  // центральная
-  const centerIndex = 1
-  const centerB = boundsArr[centerIndex]
-
+  // центральная фигура
+  const centerB = boundsArr[1]
   const centerX =
     CENTER_X - (centerB.w * CELL * FIGURE_IDLE_SCALE) / 2
 
-  // левая
+  // левая фигура — от левого края
   const leftB = boundsArr[0]
   const leftX =
-    centerX -
-    GAP -
-    (leftB.w * CELL * FIGURE_IDLE_SCALE)
+    EDGE_PADDING
 
-  // правая
+  // правая фигура — от правого края
   const rightB = boundsArr[2]
   const rightX =
-    centerX +
-    (centerB.w * CELL * FIGURE_IDLE_SCALE) +
-    GAP
+    BASE_W -
+    EDGE_PADDING -
+    (rightB.w * CELL * FIGURE_IDLE_SCALE)
 
   const xs = [leftX, centerX, rightX]
 
   for (let i = 0; i < 3; i++) {
-    const s = shapes[i]
     const b = boundsArr[i]
 
     const homeY =
@@ -231,7 +225,7 @@ function spawnSet() {
       (b.h * CELL * FIGURE_IDLE_SCALE) / 2
 
     figures.push({
-      shape: s,
+      shape: shapes[i],
       color: COLORS[Math.random() * COLORS.length | 0],
       homeX: xs[i],
       homeY,
