@@ -195,15 +195,18 @@ function spawnSet() {
 
   const SLOT_COUNT = 3
   const SLOT_WIDTH = BASE_W / SLOT_COUNT
-  const GAP_Y = 20
 
   for (let i = 0; i < SLOT_COUNT; i++) {
     let s = shapes[i]
     let b = bounds(s)
 
+    let scaledW = b.w * CELL * FIGURE_IDLE_SCALE
+    let scaledH = b.h * CELL * FIGURE_IDLE_SCALE
+
     let slotCenterX = SLOT_WIDTH * i + SLOT_WIDTH / 2
-    let homeX = slotCenterX - (b.w * CELL * FIGURE_IDLE_SCALE) / 2
-    let homeY = FIGURE_Y - (b.h * CELL * FIGURE_IDLE_SCALE) / 2 + GAP_Y
+
+    let homeX = slotCenterX - scaledW / 2
+    let homeY = FIGURE_Y - scaledH / 2
 
     figures.push({
       shape: s,
