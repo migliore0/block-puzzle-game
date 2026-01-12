@@ -215,8 +215,19 @@ function rr(x,y,w,h,r){
 }
 
 function drawBlock(x,y,col){
+  const pad=2
+  const size=CELL-pad*2
+
+  ctx.fillStyle="rgba(0,0,0,0.18)"
+  rr(x+pad+2,y+pad+3,size,size,8)
+  ctx.fill()
+
   ctx.fillStyle=col
-  rr(x,y,CELL,CELL,8)
+  rr(x+pad,y+pad,size,size,8)
+  ctx.fill()
+
+  ctx.fillStyle="rgba(255,255,255,0.35)"
+  rr(x+pad+4,y+pad+4,size-8,6,4)
   ctx.fill()
 }
 
@@ -459,5 +470,3 @@ function loop(){
 
 init()
 loop()
-
-сделай мне текстовый документ с измененным визуалом 
