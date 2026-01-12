@@ -485,7 +485,7 @@ c.onpointerup=()=>{
   }else{
     f.tx=f.homeX
     f.ty=f.homeY
-    f.scale=0.9
+    f.scale=0.85
   }
   dragging=null
   preview=[]
