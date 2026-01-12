@@ -1,9 +1,6 @@
 const c=document.getElementById("game")
 const ctx=c.getContext("2d")
 
-const BLOCK = 34
-const BLOCK_PAD = (CELL - BLOCK) / 2
-
 const BASE_W=360
 const BASE_H=640
 
