@@ -195,21 +195,16 @@ function spawnSet(){
 
   const spacing = BASE_W / 3
 
-  // 🔧 РУЧНЫЕ КОРРЕКТИРОВКИ (ПРОВЕРЕНЫ)
-  const OFFSET_X = -40   // ← чуть влево
-  const OFFSET_Y = -40   // ↑ чуть выше
-
   for(let i=0;i<3;i++){
     let s=shapes[i]
     let b=bounds(s)
 
     let cx = spacing * (i + 1)
+    let homeX = cx - (b.w * CELL * FIGURE_IDLE_SCALE) / 2
+    let homeY = FIGURE_Y - (b.h * CELL * FIGURE_IDLE_SCALE) / 2
 
-    let homeX =
-      cx - (b.w * CELL * FIGURE_IDLE_SCALE) / 2 + OFFSET_X
-
-    let homeY =
-      FIGURE_Y - (b.h * CELL * FIGURE_IDLE_SCALE) / 2 + OFFSET_Y
+    // ✅ СМЕЩЕНИЕ ВСЕХ ФИГУР ВЛЕВО НА 1 КЛЕТКУ
+    homeX -= CELL
 
     figures.push({
       shape:s,
