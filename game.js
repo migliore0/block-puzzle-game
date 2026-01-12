@@ -193,36 +193,34 @@ function spawnSet() {
   figures = []
   const shapes = generatePredictiveSet()
 
-  const EDGE_PADDING = 24   // одинаковый отступ от краёв экрана
+  const D = 32 // единое расстояние (меняй ТОЛЬКО это)
   const CENTER_X = BASE_W / 2
 
-  const boundsArr = shapes.map(s => bounds(s))
+  const b0 = bounds(shapes[0]) // левая
+  const b1 = bounds(shapes[1]) // центр
+  const b2 = bounds(shapes[2]) // правая
 
-  // центральная фигура
-  const centerB = boundsArr[1]
-  const centerX =
-    CENTER_X - (centerB.w * CELL * FIGURE_IDLE_SCALE) / 2
+  // ширины фигур с учётом scale
+  const w0 = b0.w * CELL * FIGURE_IDLE_SCALE
+  const w1 = b1.w * CELL * FIGURE_IDLE_SCALE
+  const w2 = b2.w * CELL * FIGURE_IDLE_SCALE
 
-  // левая фигура — от левого края
-  const leftB = boundsArr[0]
-  const leftX =
-    EDGE_PADDING
+  // центральная — строго по центру
+  const centerX = CENTER_X - w1 / 2
 
-  // правая фигура — от правого края
-  const rightB = boundsArr[2]
-  const rightX =
-    BASE_W -
-    EDGE_PADDING -
-    (rightB.w * CELL * FIGURE_IDLE_SCALE)
+  // левая — на расстоянии D от центра
+  const leftX = centerX - D - w0
+
+  // правая — на расстоянии D от центра
+  const rightX = centerX + w1 + D
 
   const xs = [leftX, centerX, rightX]
 
   for (let i = 0; i < 3; i++) {
-    const b = boundsArr[i]
+    const b = bounds(shapes[i])
+    const h = b.h * CELL * FIGURE_IDLE_SCALE
 
-    const homeY =
-      FIGURE_Y -
-      (b.h * CELL * FIGURE_IDLE_SCALE) / 2
+    const homeY = FIGURE_Y - h / 2
 
     figures.push({
       shape: shapes[i],
