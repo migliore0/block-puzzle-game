@@ -10,24 +10,24 @@ let SCALE=1
 
 function resize(){
   const dpr=window.devicePixelRatio||1
-  const w=window.innerWidth
-  const h=window.innerHeight
-  VIEW_W=w
-  VIEW_H=h
-  SCALE=Math.min(w/BASE_W,h/BASE_H)
-  c.style.width=w+"px"
-  c.style.height=h+"px"
-  c.width=w*dpr
-  c.height=h*dpr
+  VIEW_W=window.innerWidth
+  VIEW_H=window.innerHeight
+  SCALE=Math.min(VIEW_W/BASE_W,VIEW_H/BASE_H)
+  c.style.width=VIEW_W+"px"
+  c.style.height=VIEW_H+"px"
+  c.width=VIEW_W*dpr
+  c.height=VIEW_H*dpr
   ctx.setTransform(dpr,0,0,dpr,0,0)
 }
 window.addEventListener("resize",resize)
 resize()
 
 const GRID=8
-const CELL=36
+const CELL=40
 const FX=(BASE_W-GRID*CELL)/2
-const FY=110
+const FY=120
+
+const SNAP_DIST=0.45
 
 const UI_BG="#F2F4F8"
 const BOARD_BG="#E6EAF2"
@@ -64,14 +64,16 @@ let comboText=null
 let paused=false
 let showMenu=false
 let showGameOver=false
+let canContinue=true
 let audioCtx=null
+let shapeHistory=[]
 
-function sound(f=300,d=0.06){
+function sound(f=300,d=0.06,v=0.08){
   if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)()
   const o=audioCtx.createOscillator()
   const g=audioCtx.createGain()
   o.frequency.value=f
-  g.gain.value=0.08
+  g.gain.value=v
   o.connect(g)
   g.connect(audioCtx.destination)
   o.start()
@@ -95,41 +97,97 @@ function canPlace(s,x,y){
   })
 }
 
+function cloneField(f){
+  return f.map(r=>r.slice())
+}
+
+function anyMoveOn(f,shapes){
+  for(let s of shapes)
+    for(let y=0;y<GRID;y++)
+      for(let x=0;x<GRID;x++)
+        if(canPlaceOn(f,s,x,y)) return true
+  return false
+}
+
+function canPlaceOn(f,s,x,y){
+  return s.every(b=>{
+    let nx=x+b[0],ny=y+b[1]
+    return nx>=0&&ny>=0&&nx<GRID&&ny<GRID&&!f[ny][nx]
+  })
+}
+
+function placeOn(f,s,x,y){
+  s.forEach(b=>f[y+b[1]][x+b[0]]=1)
+}
+
+function fillRatio(){
+  let c=0
+  for(let y=0;y<GRID;y++)for(let x=0;x<GRID;x++)if(field[y][x])c++
+  return c/(GRID*GRID)
+}
+
+function generatePredictiveSet(){
+  let tries=0
+  while(tries++<12){
+    let set=[]
+    let used=[]
+    let fill=fillRatio()
+    let pool=SHAPES.filter(s=>{
+      for(let y=0;y<GRID;y++)
+        for(let x=0;x<GRID;x++)
+          if(canPlace(s,x,y)) return true
+      return false
+    })
+    if(!pool.length) pool=[SHAPES[0]]
+    pool=pool.filter(s=>!shapeHistory.includes(s)||Math.random()<0.3)
+    if(fill>0.75){
+      pool=pool.sort((a,b)=>bounds(a).w*bounds(a).h-bounds(b).w*bounds(b).h)
+    }
+    for(let i=0;i<3;i++){
+      let s
+      do{s=pool[Math.random()*pool.length|0]}while(used.includes(s))
+      used.push(s)
+      set.push(s)
+    }
+    let test=cloneField(field)
+    if(anyMoveOn(test,set)){
+      shapeHistory.push(...set)
+      shapeHistory=shapeHistory.slice(-6)
+      return set
+    }
+  }
+  return [SHAPES[0],SHAPES[1],SHAPES[2]]
+}
+
+function spawnSet(){
+  figures=[]
+  const slots=[70,180,290]
+  let shapes=generatePredictiveSet()
+  for(let i=0;i<3;i++){
+    let s=shapes[i]
+    let b=bounds(s)
+    figures.push({
+      shape:s,
+      color:COLORS[Math.random()*COLORS.length|0],
+      homeX:slots[i],
+      homeY:520-b.h*CELL,
+      x:slots[i],
+      y:BASE_H+140,
+      tx:slots[i],
+      ty:520-b.h*CELL,
+      vy:0,
+      bounce:true,
+      scale:0.9
+    })
+  }
+}
+
 function anyMoves(){
   for(let f of figures)
     for(let y=0;y<GRID;y++)
       for(let x=0;x<GRID;x++)
         if(canPlace(f.shape,x,y)) return true
   return false
-}
-
-function pickSmart(){
-  let pool=SHAPES.filter(s=>{
-    for(let y=0;y<GRID;y++)
-      for(let x=0;x<GRID;x++)
-        if(canPlace(s,x,y)) return true
-    return false
-  })
-  if(!pool.length) pool=[SHAPES[0]]
-  return pool[Math.random()*pool.length|0]
-}
-
-function spawnSet(){
-  figures=[]
-  const slots=[60,150,240]
-  for(let i=0;i<3;i++){
-    let s=pickSmart()
-    let b=bounds(s)
-    figures.push({
-      shape:s,
-      color:COLORS[Math.random()*COLORS.length|0],
-      x:slots[i],
-      y:FY+GRID*CELL+40,
-      tx:slots[i],
-      ty:FY+GRID*CELL+40,
-      scale:0.85
-    })
-  }
 }
 
 function init(){
@@ -141,6 +199,8 @@ function init(){
   paused=false
   showMenu=false
   showGameOver=false
+  canContinue=true
+  shapeHistory=[]
   spawnSet()
 }
 
@@ -155,14 +215,8 @@ function rr(x,y,w,h,r){
 }
 
 function drawBlock(x,y,col){
-  ctx.fillStyle="rgba(0,0,0,.12)"
-  rr(x+3,y+5,CELL-6,CELL-6,10)
-  ctx.fill()
   ctx.fillStyle=col
-  rr(x,y,CELL-6,CELL-6,10)
-  ctx.fill()
-  ctx.fillStyle="rgba(255,255,255,.35)"
-  rr(x+6,y+6,CELL-20,6,4)
+  rr(x,y,CELL,CELL,8)
   ctx.fill()
 }
 
@@ -187,7 +241,7 @@ function clearLines(){
   score+=cleared*150
   comboText={t:"COMBO x"+cleared,a:60}
   sound(220+cleared*60)
-  vibrate(20)
+  vibrate(30)
 }
 
 function getPointer(e){
@@ -208,11 +262,11 @@ function draw(){
   ctx.fillRect(0,0,BASE_W,BASE_H)
 
   ctx.fillStyle=BOARD_FRAME
-  rr(FX-14,FY-14,GRID*CELL+28,GRID*CELL+28,24)
+  rr(FX-16,FY-16,GRID*CELL+32,GRID*CELL+32,26)
   ctx.fill()
 
   ctx.fillStyle=BOARD_BG
-  rr(FX-8,FY-8,GRID*CELL+16,GRID*CELL+16,18)
+  rr(FX-8,FY-8,GRID*CELL+16,GRID*CELL+16,20)
   ctx.fill()
 
   for(let y=0;y<GRID;y++)for(let x=0;x<GRID;x++){
@@ -229,8 +283,18 @@ function draw(){
   })
 
   figures.forEach(f=>{
-    f.x+=(f.tx-f.x)*0.8
-    f.y+=(f.ty-f.y)*0.8
+    if(f.bounce){
+      f.vy+=1.3
+      f.y+=f.vy
+      if(f.y>=f.ty){
+        f.y=f.ty
+        f.vy*=-0.45
+        if(Math.abs(f.vy)<0.8) f.bounce=false
+      }
+    }else{
+      f.x=f.tx
+      f.y=f.ty
+    }
     let b=bounds(f.shape)
     ctx.save()
     ctx.translate(f.x+CELL*b.w/2,f.y+CELL*b.h/2)
@@ -240,16 +304,19 @@ function draw(){
     ctx.restore()
   })
 
-  visualScore+=(score-visualScore)*0.15
+  visualScore+=(score-visualScore)*0.2
   ctx.fillStyle="#333"
   ctx.font="600 36px Arial"
   ctx.textAlign="center"
-  ctx.fillText(Math.floor(visualScore),BASE_W/2,72)
+  ctx.fillText(Math.floor(visualScore),BASE_W/2,70)
+
   ctx.font="14px Arial"
-  ctx.fillText("BEST "+best,BASE_W/2,96)
+  ctx.textAlign="left"
+  ctx.fillText("👑 "+best,16,26)
 
   if(comboText){
     ctx.font="20px Arial"
+    ctx.textAlign="center"
     ctx.fillStyle="rgba(0,0,0,"+(comboText.a/60)+")"
     ctx.fillText(comboText.t,BASE_W/2,130)
     comboText.a--
@@ -270,14 +337,71 @@ function draw(){
 
   ctx.font="26px Arial"
   ctx.textAlign="right"
-  ctx.fillText("⚙",BASE_W-14,34)
+  ctx.fillText("⚙",BASE_W-14,36)
+
+  if(showMenu){
+    ctx.fillStyle="rgba(0,0,0,.55)"
+    ctx.fillRect(0,0,BASE_W,BASE_H)
+    ctx.fillStyle="#fff"
+    ctx.font="700 28px Arial"
+    ctx.textAlign="center"
+    ctx.fillText("PAUSE",BASE_W/2,260)
+    ctx.font="22px Arial"
+    ctx.fillText("Resume",BASE_W/2,320)
+    ctx.fillText("Restart",BASE_W/2,370)
+  }
+
+  if(showGameOver){
+    ctx.fillStyle="rgba(0,0,0,.65)"
+    ctx.fillRect(0,0,BASE_W,BASE_H)
+    ctx.fillStyle="#fff"
+    ctx.font="700 32px Arial"
+    ctx.textAlign="center"
+    ctx.fillText("GAME OVER",BASE_W/2,260)
+    ctx.font="22px Arial"
+    if(canContinue) ctx.fillText("▶ Continue",BASE_W/2,320)
+    ctx.fillText("🔁 Restart",BASE_W/2,370)
+  }
 
   ctx.restore()
 }
 
 c.onpointerdown=e=>{
   let {x,y}=getPointer(e)
-  if(x>BASE_W-48&&y<48){paused=true;showMenu=true;return}
+  if(x>BASE_W-50&&y<50){
+    paused=true
+    showMenu=true
+    return
+  }
+  if(showMenu){
+    if(y>300&&y<340){showMenu=false;paused=false}
+    else if(y>350&&y<390){init()}
+    return
+  }
+  if(showGameOver){
+    if(canContinue&&y>300&&y<340){
+      canContinue=false
+      showGameOver=false
+      paused=false
+      let row=Math.random()*GRID|0
+      for(let x=0;x<GRID;x++) field[row][x]=null
+      figures=[{
+        shape:SHAPES[12],
+        color:COLORS[Math.random()*COLORS.length|0],
+        homeX:180,
+        homeY:520-3*CELL,
+        x:180,
+        y:BASE_H+140,
+        tx:180,
+        ty:520-3*CELL,
+        vy:0,
+        bounce:true,
+        scale:0.9
+      }]
+      return
+    }
+    if(y>350&&y<390){init();return}
+  }
   figures.forEach(f=>{
     let b=bounds(f.shape)
     if(x>f.x&&x<f.x+b.w*CELL&&y>f.y&&y<f.y+b.h*CELL){
@@ -293,20 +417,22 @@ c.onpointermove=e=>{
   if(!dragging||paused) return
   let {x,y}=getPointer(e)
   dragging.tx=Math.max(0,Math.min(BASE_W-CELL,x-CELL))
-  dragging.ty=Math.max(FY,y-CELL*2)
+  dragging.ty=Math.max(0,Math.min(BASE_H-CELL,y-CELL*2))
   preview=[]
   let gx=Math.round((dragging.tx-FX)/CELL)
   let gy=Math.round((dragging.ty-FY)/CELL)
-  if(canPlace(dragging.shape,gx,gy))
+  let cx=Math.abs((dragging.tx-FX)/CELL-gx)
+  let cy=Math.abs((dragging.ty-FY)/CELL-gy)
+  if(cx<SNAP_DIST&&cy<SNAP_DIST&&canPlace(dragging.shape,gx,gy))
     dragging.shape.forEach(b=>preview.push([gx+b[0],gy+b[1]]))
 }
 
 c.onpointerup=()=>{
   if(!dragging||paused) return
   let f=dragging
-  let gx=Math.round((f.x-FX)/CELL)
-  let gy=Math.round((f.y-FY)/CELL)
-  if(canPlace(f.shape,gx,gy)){
+  let gx=Math.round((f.tx-FX)/CELL)
+  let gy=Math.round((f.ty-FY)/CELL)
+  if(preview.length&&canPlace(f.shape,gx,gy)){
     f.shape.forEach(b=>field[gy+b[1]][gx+b[0]]=f.color)
     score+=f.shape.length*10
     best=Math.max(best,score)
@@ -318,9 +444,9 @@ c.onpointerup=()=>{
     sound(220)
     vibrate(20)
   }else{
-    f.scale=0.85
-    f.tx=f.x
-    f.ty=f.y
+    f.tx=f.homeX
+    f.ty=f.homeY
+    f.scale=0.9
   }
   dragging=null
   preview=[]
