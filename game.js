@@ -503,8 +503,19 @@ c.onpointerup=()=>{
     localStorage.best=best
     clearLines()
     figures=figures.filter(x=>x!==f)
-    if(!figures.length) spawnSet()
-    if(!anyMoves()){showGameOver=true;paused=true}
+    if (!figures.length) spawnSet()
+
+if (!anyMoves()) {
+  showGameOver = true
+  paused = true
+
+  if (window.Telegram && Telegram.WebApp) {
+    Telegram.WebApp.sendData(JSON.stringify({
+      type: 'score',
+      score: score
+    }))
+  }
+}
     sound(220)
     vibrate(20)
   }else{
