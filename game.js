@@ -193,32 +193,25 @@ function spawnSet() {
   figures = []
   let shapes = generatePredictiveSet()
 
-  const SLOT_COUNT = 3
-  const SAFE_MARGIN = 16
-  const SPAWN_W = BASE_W - SAFE_MARGIN * 2
-  const SLOT_W = SPAWN_W / SLOT_COUNT
+  const GAP = 18
 
-  for (let i = 0; i < SLOT_COUNT; i++) {
-    let s = shapes[i]
-    let b = bounds(s)
+  // 1. считаем реальные размеры фигур
+  let widths = shapes.map(s => bounds(s).w * CELL * FIGURE_IDLE_SCALE)
+  let heights = shapes.map(s => bounds(s).h * CELL * FIGURE_IDLE_SCALE)
 
-    let scaledW = b.w * CELL * FIGURE_IDLE_SCALE
-    let scaledH = b.h * CELL * FIGURE_IDLE_SCALE
+  // 2. общая ширина группы
+  let totalWidth =
+    widths[0] + widths[1] + widths[2] + GAP * 2
 
-    let slotCenterX =
-      SAFE_MARGIN + SLOT_W * i + SLOT_W / 2
+  // 3. старт X — центрируем всю группу
+  let startX = (BASE_W - totalWidth) / 2
 
-    let homeX = slotCenterX - scaledW / 2
-    let homeY = FIGURE_Y - scaledH / 2
-
-    // ЖЁСТКАЯ защита от вылета за экран
-    homeX = Math.max(
-      SAFE_MARGIN,
-      Math.min(BASE_W - SAFE_MARGIN - scaledW, homeX)
-    )
+  for (let i = 0; i < 3; i++) {
+    let homeX = startX
+    let homeY = FIGURE_Y - heights[i] / 2
 
     figures.push({
-      shape: s,
+      shape: shapes[i],
       color: COLORS[Math.random() * COLORS.length | 0],
       homeX,
       homeY,
@@ -230,6 +223,9 @@ function spawnSet() {
       bounce: true,
       scale: FIGURE_IDLE_SCALE
     })
+
+    // 4. следующий X = текущий + ширина + gap
+    startX += widths[i] + GAP
   }
 }
 
