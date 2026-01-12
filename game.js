@@ -193,21 +193,26 @@ function spawnSet() {
   figures = []
   const shapes = generatePredictiveSet()
 
-  const GAP = 24
-  const BOARD_CENTER_X = FX + (GRID * CELL) / 2
+  const SLOT_COUNT = 3
+  const SLOT_WIDTH = BASE_W / SLOT_COUNT
+  const GAP_Y = 30
 
-  const widths = shapes.map(s => bounds(s).w * CELL)
-  const heights = shapes.map(s => bounds(s).h * CELL)
+  for (let i = 0; i < SLOT_COUNT; i++) {
+    const s = shapes[i]
+    const b = bounds(s)
 
-  const totalWidth = widths[0] + widths[1] + widths[2] + GAP * 2
-  let x = BOARD_CENTER_X - totalWidth / 2
+    // центр слота по экрану
+    const slotCenterX = SLOT_WIDTH * i + SLOT_WIDTH / 2
 
-  for (let i = 0; i < 3; i++) {
-    const homeX = x
-    const homeY = FIGURE_Y - heights[i] / 2
+    // логический размер (БЕЗ scale)
+    const w = b.w * CELL
+    const h = b.h * CELL
+
+    const homeX = slotCenterX - w / 2
+    const homeY = FIGURE_Y - h / 2 + GAP_Y
 
     figures.push({
-      shape: shapes[i],
+      shape: s,
       color: COLORS[Math.random() * COLORS.length | 0],
       homeX,
       homeY,
@@ -219,8 +224,6 @@ function spawnSet() {
       bounce: true,
       scale: FIGURE_IDLE_SCALE
     })
-
-    x += widths[i] + GAP
   }
 }
 
