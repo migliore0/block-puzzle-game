@@ -194,23 +194,22 @@ function spawnSet() {
   const shapes = generatePredictiveSet()
 
   const SLOT_COUNT = 3
-  const SLOT_WIDTH = BASE_W / SLOT_COUNT
-  const GAP_Y = 30
+  const BOARD_W = GRID * CELL
+  const SLOT_W = BOARD_W / SLOT_COUNT
+  const START_X = FX
+  const GAP_Y = 40
 
   for (let i = 0; i < SLOT_COUNT; i++) {
     const s = shapes[i]
     const b = bounds(s)
 
-    const slotCenterX = SLOT_WIDTH * i + SLOT_WIDTH / 2
+    const w = b.w * CELL * FIGURE_IDLE_SCALE
+    const h = b.h * CELL * FIGURE_IDLE_SCALE
 
-    const w = b.w * CELL
-    const h = b.h * CELL
+    const slotCenterX = START_X + SLOT_W * i + SLOT_W / 2
 
-    let homeX = slotCenterX - w / 2
-    let homeY = FIGURE_Y - h / 2 + GAP_Y
-
-    // 🔴 ВОТ ЭТА СТРОКА — ВСЁ РЕШАЕТ
-    homeX -= SLOT_WIDTH / 2
+    const homeX = slotCenterX - w / 2
+    const homeY = FIGURE_Y - h / 2 + GAP_Y
 
     figures.push({
       shape: s,
