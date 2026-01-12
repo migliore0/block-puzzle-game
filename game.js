@@ -426,7 +426,7 @@ c.onpointerdown=e=>{
         ty:520-3*CELL,
         vy:0,
         bounce:true,
-        scale:0.9
+        scale:0.85
       }]
       return
     }
