@@ -433,8 +433,17 @@ c.onpointerdown=e=>{
 c.onpointermove=e=>{
   if(!dragging||paused) return
   let {x,y}=getPointer(e)
-  dragging.tx=Math.max(0,Math.min(BASE_W-CELL,x-CELL))
-  dragging.ty=Math.max(0,Math.min(BASE_H-CELL,y-CELL*2))
+  let b=bounds(dragging.shape)
+
+dragging.tx=Math.max(
+  0,
+  Math.min(BASE_W - b.w*CELL, x - CELL)
+)
+
+dragging.ty=Math.max(
+  0,
+  Math.min(BASE_H - b.h*CELL, y - CELL*2)
+)
   preview=[]
   let gx=Math.round((dragging.tx-FX)/CELL)
   let gy=Math.round((dragging.ty-FY)/CELL)
