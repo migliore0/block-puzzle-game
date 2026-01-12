@@ -308,9 +308,15 @@ function draw(){
     }
     let b=bounds(f.shape)
     ctx.save()
-    ctx.translate(f.x+CELL*b.w/2,f.y+CELL*b.h/2)
-    ctx.scale(f.scale,f.scale)
-    ctx.translate(-CELL*b.w/2,-CELL*b.h/2)
+    ctx.translate(
+  f.x + (CELL*b.w)/2,
+  f.y + (CELL*b.h)/2
+)
+ctx.scale(f.scale,f.scale)
+ctx.translate(
+  -(CELL*b.w)/2,
+  -(CELL*b.h)/2
+)
     f.shape.forEach(p=>drawBlock(p[0]*CELL,p[1]*CELL,f.color))
     ctx.restore()
   })
