@@ -201,15 +201,16 @@ function spawnSet() {
     const s = shapes[i]
     const b = bounds(s)
 
-    // центр слота по экрану
     const slotCenterX = SLOT_WIDTH * i + SLOT_WIDTH / 2
 
-    // логический размер (БЕЗ scale)
     const w = b.w * CELL
     const h = b.h * CELL
 
-    const homeX = slotCenterX - w / 2
-    const homeY = FIGURE_Y - h / 2 + GAP_Y
+    let homeX = slotCenterX - w / 2
+    let homeY = FIGURE_Y - h / 2 + GAP_Y
+
+    // 🔴 ВОТ ЭТА СТРОКА — ВСЁ РЕШАЕТ
+    homeX -= SLOT_WIDTH / 2
 
     figures.push({
       shape: s,
