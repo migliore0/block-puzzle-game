@@ -189,34 +189,39 @@ const BOTTOM_AREA_Y = FY + GRID*CELL
 const BOTTOM_AREA_H = BASE_H - BOTTOM_AREA_Y
 const FIGURE_Y = BOTTOM_AREA_Y + BOTTOM_AREA_H/2
 
-function spawnSet(){
-  figures=[]
-  let shapes=generatePredictiveSet()
+function spawnSet() {
+  figures = []
+  let shapes = generatePredictiveSet()
 
-  const spacing = BASE_W / 3
+  const CENTER_X = BASE_W / 2
+  const OFFSET_X = 120
+  const POSITIONS = [
+    CENTER_X - OFFSET_X, // левая
+    CENTER_X,            // центр
+    CENTER_X + OFFSET_X  // правая
+  ]
 
-  for(let i=0;i<3;i++){
-    let s=shapes[i]
-    let b=bounds(s)
+  for (let i = 0; i < 3; i++) {
+    let s = shapes[i]
+    let b = bounds(s)
 
-    let cx = spacing * (i + 1)
-    let homeX = cx - (b.w * CELL * FIGURE_IDLE_SCALE) / 2
-    let homeY = FIGURE_Y - (b.h * CELL * FIGURE_IDLE_SCALE) / 2
+    let homeX =
+      POSITIONS[i] - (b.w * CELL * FIGURE_IDLE_SCALE) / 2
 
-    // ✅ СМЕЩЕНИЕ ВСЕХ ФИГУР ВЛЕВО НА 1 КЛЕТКУ
-    homeX -= CELL
+    let homeY =
+      FIGURE_Y - (b.h * CELL * FIGURE_IDLE_SCALE) / 2
 
     figures.push({
-      shape:s,
-      color:COLORS[Math.random()*COLORS.length|0],
+      shape: s,
+      color: COLORS[Math.random() * COLORS.length | 0],
       homeX,
       homeY,
-      x:homeX,
-      y:BASE_H + 140,
-      tx:homeX,
-      ty:homeY,
-      vy:0,
-      bounce:true,
+      x: homeX,
+      y: BASE_H + 140,
+      tx: homeX,
+      ty: homeY,
+      vy: 0,
+      bounce: true,
       scale: FIGURE_IDLE_SCALE
     })
   }
