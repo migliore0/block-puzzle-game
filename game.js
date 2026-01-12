@@ -1,3 +1,6 @@
+const FIGURE_IDLE_SCALE = 0.75
+const FIGURE_DRAG_SCALE = 1  
+
 const c=document.getElementById("game")
 const ctx=c.getContext("2d")
 
@@ -13,8 +16,6 @@ function resize(){
   VIEW_W=window.innerWidth
   VIEW_H=window.innerHeight
   SCALE=Math.min(VIEW_W/BASE_W,VIEW_H/BASE_H)
-  const FIGURE_IDLE_SCALE = 0.75
-  const FIGURE_DRAG_SCALE = 1  
   c.style.width=VIEW_W+"px"
   c.style.height=VIEW_H+"px"
   c.width=VIEW_W*dpr
