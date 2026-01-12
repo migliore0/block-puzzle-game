@@ -1,4 +1,4 @@
-const FIGURE_IDLE_SCALE = 0.75
+const FIGURE_IDLE_SCALE = 0.6
 const FIGURE_DRAG_SCALE = 1  
 
 const c=document.getElementById("game")
@@ -193,9 +193,11 @@ function spawnSet(){
   figures=[]
   let shapes=generatePredictiveSet()
 
-  const total = 3
-  const spacing = BASE_W / (total + 1)
+  const spacing = BASE_W / 3
+const GAP = 18
 
+let cx = spacing * (i + 0.5)
+let homeX = cx - (b.w * CELL * FIGURE_IDLE_SCALE) / 2
   for(let i=0;i<3;i++){
     let s=shapes[i]
     let b=bounds(s)
