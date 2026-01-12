@@ -193,25 +193,31 @@ function spawnSet() {
   figures = []
   const shapes = generatePredictiveSet()
 
-  const SHIFT_LEFT = 19        // ← ВАЖНО: регулируй это число
-  const spacing = 120          // расстояние между фигурами
+  const GAP = 20
+  const widths = []
+
+  // 1. считаем ширины фигур с учётом scale
+  for (let i = 0; i < 3; i++) {
+    const b = bounds(shapes[i])
+    widths.push(b.w * CELL * FIGURE_IDLE_SCALE)
+  }
+
+  // 2. общая ширина группы
+  const totalWidth =
+    widths[0] + widths[1] + widths[2] + GAP * 2
+
+  // 3. старт X так, чтобы группа была по центру
+  let x = BASE_W / 2 - totalWidth / 2
 
   for (let i = 0; i < 3; i++) {
     const s = shapes[i]
     const b = bounds(s)
 
-    const w = b.w * CELL * FIGURE_IDLE_SCALE
+    const w = widths[i]
     const h = b.h * CELL * FIGURE_IDLE_SCALE
 
-    const homeX =
-      BASE_W / 2
-      - spacing
-      + i * spacing
-      - w / 2
-      - SHIFT_LEFT
-
-    const homeY =
-      FIGURE_Y - h / 2 + 30
+    const homeX = x
+    const homeY = FIGURE_Y - h / 2 + 30
 
     figures.push({
       shape: s,
@@ -226,6 +232,8 @@ function spawnSet() {
       bounce: true,
       scale: FIGURE_IDLE_SCALE
     })
+
+    x += w + GAP
   }
 }
 
