@@ -194,17 +194,14 @@ function spawnSet() {
   let shapes = generatePredictiveSet()
 
   const GAP = 18
+  const BOARD_CENTER_X = FX + (GRID * CELL) / 2
 
-  // 1. считаем реальные размеры фигур
   let widths = shapes.map(s => bounds(s).w * CELL * FIGURE_IDLE_SCALE)
   let heights = shapes.map(s => bounds(s).h * CELL * FIGURE_IDLE_SCALE)
 
-  // 2. общая ширина группы
-  let totalWidth =
-    widths[0] + widths[1] + widths[2] + GAP * 2
+  let totalWidth = widths[0] + widths[1] + widths[2] + GAP * 2
 
-  // 3. старт X — центрируем всю группу
-  let startX = (BASE_W - totalWidth) / 2
+  let startX = BOARD_CENTER_X - totalWidth / 2
 
   for (let i = 0; i < 3; i++) {
     let homeX = startX
@@ -224,7 +221,6 @@ function spawnSet() {
       scale: FIGURE_IDLE_SCALE
     })
 
-    // 4. следующий X = текущий + ширина + gap
     startX += widths[i] + GAP
   }
 }
