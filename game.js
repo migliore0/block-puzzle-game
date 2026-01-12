@@ -524,15 +524,4 @@ function loop(){
 }
 
 init()
-loop() 
-
-
-
-c.addEventListener('pointercancel', cancelDrag)
-c.addEventListener('pointerleave', cancelDrag)
-c.addEventListener('pointerout', cancelDrag)
-
-document.addEventListener('visibilitychange', () => {
-  if (document.hidden) cancelDrag()
-})
-
+loop()
