@@ -189,51 +189,41 @@ const BOTTOM_AREA_Y = FY + GRID*CELL
 const BOTTOM_AREA_H = BASE_H - BOTTOM_AREA_Y
 const FIGURE_Y = BOTTOM_AREA_Y + BOTTOM_AREA_H/2
 
-function spawnSet() {
-  figures = []
-  const shapes = generatePredictiveSet()
+function spawnSet(){
+  figures=[]
+  let shapes=generatePredictiveSet()
 
-  const GAP = 20
-  const widths = []
+  const spacing = BASE_W / 3
 
-  // 1. считаем ширины фигур с учётом scale
-  for (let i = 0; i < 3; i++) {
-    const b = bounds(shapes[i])
-    widths.push(b.w * CELL * FIGURE_IDLE_SCALE)
-  }
+  // 🔧 РУЧНЫЕ КОРРЕКТИРОВКИ (ПРОВЕРЕНЫ)
+  const OFFSET_X = -20   // ← чуть влево
+  const OFFSET_Y = -40   // ↑ чуть выше
 
-  // 2. общая ширина группы
-  const totalWidth =
-    widths[0] + widths[1] + widths[2] + GAP * 2
+  for(let i=0;i<3;i++){
+    let s=shapes[i]
+    let b=bounds(s)
 
-  // 3. старт X так, чтобы группа была по центру
-  let x = BASE_W / 2 - totalWidth / 2
+    let cx = spacing * (i + 1)
 
-  for (let i = 0; i < 3; i++) {
-    const s = shapes[i]
-    const b = bounds(s)
+    let homeX =
+      cx - (b.w * CELL * FIGURE_IDLE_SCALE) / 2 + OFFSET_X
 
-    const w = widths[i]
-    const h = b.h * CELL * FIGURE_IDLE_SCALE
-
-    const homeX = x
-    const homeY = FIGURE_Y - h / 2 + 30
+    let homeY =
+      FIGURE_Y - (b.h * CELL * FIGURE_IDLE_SCALE) / 2 + OFFSET_Y
 
     figures.push({
-      shape: s,
-      color: COLORS[Math.random() * COLORS.length | 0],
+      shape:s,
+      color:COLORS[Math.random()*COLORS.length|0],
       homeX,
       homeY,
-      x: homeX,
-      y: BASE_H + 140,
-      tx: homeX,
-      ty: homeY,
-      vy: 0,
-      bounce: true,
+      x:homeX,
+      y:BASE_H + 140,
+      tx:homeX,
+      ty:homeY,
+      vy:0,
+      bounce:true,
       scale: FIGURE_IDLE_SCALE
     })
-
-    x += w + GAP
   }
 }
 
