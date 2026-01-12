@@ -162,25 +162,38 @@ function generatePredictiveSet(){
   return [SHAPES[0],SHAPES[1],SHAPES[2]]
 }
 
+
+const BOTTOM_AREA_Y = FY + GRID*CELL
+const BOTTOM_AREA_H = BASE_H - BOTTOM_AREA_Y
+const FIGURE_Y = BOTTOM_AREA_Y + BOTTOM_AREA_H/2
+
 function spawnSet(){
   figures=[]
-  const slots=[70,180,290]
   let shapes=generatePredictiveSet()
+
+  const total = 3
+  const spacing = BASE_W / (total + 1)
+
   for(let i=0;i<3;i++){
     let s=shapes[i]
     let b=bounds(s)
+
+    let cx = spacing * (i + 1)
+    let homeX = cx - (b.w * CELL) / 2
+    let homeY = FIGURE_Y - (b.h * CELL) / 2
+
     figures.push({
       shape:s,
       color:COLORS[Math.random()*COLORS.length|0],
-      homeX:slots[i],
-      homeY:520-b.h*CELL,
-      x:slots[i],
-      y:BASE_H+140,
-      tx:slots[i],
-      ty:520-b.h*CELL,
+      homeX,
+      homeY,
+      x:homeX,
+      y:BASE_H + 140,
+      tx:homeX,
+      ty:homeY,
       vy:0,
       bounce:true,
-      scale:0.9
+      scale:0.85
     })
   }
 }
