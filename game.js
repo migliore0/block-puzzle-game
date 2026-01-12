@@ -526,14 +526,7 @@ function loop(){
 init()
 loop() 
 
-function cancelDrag() {
-  if (!dragging) return
-  dragging.tx = dragging.homeX
-  dragging.ty = dragging.homeY
-  dragging.scale = FIGURE_IDLE_SCALE
-  dragging = null
-  preview = []
-}
+
 
 c.addEventListener('pointercancel', cancelDrag)
 c.addEventListener('pointerleave', cancelDrag)
