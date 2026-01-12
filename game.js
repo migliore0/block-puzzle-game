@@ -194,7 +194,9 @@ function spawnSet() {
   let shapes = generatePredictiveSet()
 
   const SLOT_COUNT = 3
-  const SLOT_WIDTH = BASE_W / SLOT_COUNT
+  const SAFE_MARGIN = 16
+  const SPAWN_W = BASE_W - SAFE_MARGIN * 2
+  const SLOT_W = SPAWN_W / SLOT_COUNT
 
   for (let i = 0; i < SLOT_COUNT; i++) {
     let s = shapes[i]
@@ -203,10 +205,17 @@ function spawnSet() {
     let scaledW = b.w * CELL * FIGURE_IDLE_SCALE
     let scaledH = b.h * CELL * FIGURE_IDLE_SCALE
 
-    let slotCenterX = SLOT_WIDTH * i + SLOT_WIDTH / 2
+    let slotCenterX =
+      SAFE_MARGIN + SLOT_W * i + SLOT_W / 2
 
     let homeX = slotCenterX - scaledW / 2
     let homeY = FIGURE_Y - scaledH / 2
+
+    // ЖЁСТКАЯ защита от вылета за экран
+    homeX = Math.max(
+      SAFE_MARGIN,
+      Math.min(BASE_W - SAFE_MARGIN - scaledW, homeX)
+    )
 
     figures.push({
       shape: s,
