@@ -190,12 +190,12 @@ const BOTTOM_AREA_H = BASE_H - BOTTOM_AREA_Y
 const FIGURE_Y = BOTTOM_AREA_Y + BOTTOM_AREA_H/2
 
 function spawnSet(){
-  figures=[]
-  let shapes=generatePredictiveSet()
+  figures = []
+  let shapes = generatePredictiveSet()
 
   const spacing = BASE_W / 3
 
-  for(let i=0;i<3;i++){
+  for (let i = 0; i < 3; i++) {
     let s = shapes[i]
     let b = bounds(s)
 
@@ -205,7 +205,7 @@ function spawnSet(){
 
     figures.push({
       shape: s,
-      color: COLORS[Math.random()*COLORS.length|0],
+      color: COLORS[Math.random() * COLORS.length | 0],
       homeX,
       homeY,
       x: homeX,
