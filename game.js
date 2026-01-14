@@ -193,43 +193,31 @@ function spawnSet() {
   figures = []
   const shapes = generatePredictiveSet()
 
-  const D = 32 // единое расстояние (меняй ТОЛЬКО это)
   const CENTER_X = BASE_W / 2
-
-  const b0 = bounds(shapes[0]) // левая
-  const b1 = bounds(shapes[1]) // центр
-  const b2 = bounds(shapes[2]) // правая
-
-  // ширины фигур с учётом scale
-  const w0 = b0.w * CELL * FIGURE_IDLE_SCALE
-  const w1 = b1.w * CELL * FIGURE_IDLE_SCALE
-  const w2 = b2.w * CELL * FIGURE_IDLE_SCALE
-
-  // центральная — строго по центру
-  const centerX = CENTER_X - w1 / 2
-
-  // левая — на расстоянии D от центра
-  const leftX = centerX - D - w0
-
-  // правая — на расстоянии D от центра
-  const rightX = centerX + w1 + D
-
-  const xs = [leftX, centerX, rightX]
+  const OFFSET = 120 // расстояние от центра
+  const POSITIONS = [-OFFSET, 0, OFFSET]
 
   for (let i = 0; i < 3; i++) {
-    const b = bounds(shapes[i])
-    const h = b.h * CELL * FIGURE_IDLE_SCALE
+    const s = shapes[i]
+    const b = bounds(s)
 
-    const homeY = FIGURE_Y - h / 2
+    const homeX =
+      CENTER_X +
+      POSITIONS[i] -
+      (b.w * CELL * FIGURE_IDLE_SCALE) / 2
+
+    const homeY =
+      FIGURE_Y -
+      (b.h * CELL * FIGURE_IDLE_SCALE) / 2
 
     figures.push({
-      shape: shapes[i],
+      shape: s,
       color: COLORS[Math.random() * COLORS.length | 0],
-      homeX: xs[i],
+      homeX,
       homeY,
-      x: xs[i],
+      x: homeX,
       y: BASE_H + 140,
-      tx: xs[i],
+      tx: homeX,
       ty: homeY,
       vy: 0,
       bounce: true,
