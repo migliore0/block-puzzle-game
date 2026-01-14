@@ -497,29 +497,54 @@ dragging.ty=Math.max(
     dragging.shape.forEach(b=>preview.push([gx+b[0],gy+b[1]]))
 }
 
-c.onpointerup=()=>{
-  if(!dragging||paused) return
-  let f=dragging
-  let gx=Math.round((f.tx-FX)/CELL)
-  let gy=Math.round((f.ty-FY)/CELL)
-  if(preview.length&&canPlace(f.shape,gx,gy)){
-    f.shape.forEach(b=>field[gy+b[1]][gx+b[0]]=f.color)
-    score+=f.shape.length*10
-    best=Math.max(best,score)
-    localStorage.best=best
+c.onpointerup = () => {
+  if (!dragging || paused) return
+
+  let f = dragging
+  let gx = Math.round((f.tx - FX) / CELL)
+  let gy = Math.round((f.ty - FY) / CELL)
+
+  const cells = f.shape.map(b => ({
+    x: gx + b[0],
+    y: gy + b[1]
+  }))
+
+  const canPlaceAll = cells.every(c =>
+    c.x >= 0 &&
+    c.y >= 0 &&
+    c.x < GRID &&
+    c.y < GRID &&
+    !field[c.y][c.x]
+  )
+
+  if (canPlaceAll) {
+    cells.forEach(c => {
+      field[c.y][c.x] = f.color
+    })
+
+    score += f.shape.length * 10
+    best = Math.max(best, score)
+    localStorage.best = best
+
     clearLines()
-    figures=figures.filter(x=>x!==f)
-    if(!figures.length) spawnSet()
-    if(!anyMoves()){showGameOver=true;paused=true}
+
+    figures = figures.filter(x => x !== f)
+    if (!figures.length) spawnSet()
+    if (!anyMoves()) {
+      showGameOver = true
+      paused = true
+    }
+
     sound(220)
     vibrate(20)
-  }else{
-    f.tx=f.homeX
-    f.ty=f.homeY
+  } else {
+    f.tx = f.homeX
+    f.ty = f.homeY
     f.scale = FIGURE_IDLE_SCALE
   }
-  dragging=null
-  preview=[]
+
+  dragging = null
+  preview = []
 }
 
 function loop(){
