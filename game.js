@@ -509,13 +509,7 @@ c.onpointerup = () => {
     y: gy + b[1]
   }))
 
-  const canPlaceAll = cells.every(c =>
-    c.x >= 0 &&
-    c.y >= 0 &&
-    c.x < GRID &&
-    c.y < GRID &&
-    !field[c.y][c.x]
-  )
+  const canPlaceAll = canPlace(f.shape, gx, gy)
 
   if (canPlaceAll) {
     cells.forEach(c => {
