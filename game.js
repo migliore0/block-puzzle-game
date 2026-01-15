@@ -529,11 +529,11 @@ c.onpointerup = () => {
     clearLines()
 
     figures = figures.filter(x => x !== f)
-    if (!figures.length) spawnSet()
-    if (!anyMoves()) {
-      showGameOver = true
-      paused = true
-    }
+if (!figures.length) spawnSet()
+if (figures.length && !anyMoves()) {
+  showGameOver = true
+  paused = true
+}
 
     sound(220)
     vibrate(20)
