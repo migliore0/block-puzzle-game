@@ -552,6 +552,8 @@ figures.forEach(f => {
   }
 })
 
+}
+
 c.onpointermove=e=>{
   if(!dragging||paused) return
   let {x,y}=getPointer(e)
