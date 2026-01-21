@@ -502,40 +502,53 @@ c.onpointerdown=e=>{
     else if(y>350&&y<390){init()}
     return
   }
-  if(showGameOver){
-    if(canContinue&&y>300&&y<340){
-      canContinue=false
-      showGameOver=false
-      paused=false
-      let row=Math.random()*GRID|0
-      for(let x=0;x<GRID;x++) field[row][x]=null
-      figures=[{
-        shape:SHAPES[12],
-        color:COLORS[Math.random()*COLORS.length|0],
-        homeX:180,
-        homeY:520-3*CELL,
-        x:180,
-        y:BASE_H+140,
-        tx:180,
-        ty:520-3*CELL,
-        vy:0,
-        bounce:true,
-        scale:0.85
+  if (showGameOver) {
+  if (canContinue && y > 300 && y < 340) {
+    paused = true
+    showRewardAd(() => {
+      canContinue = false
+      showGameOver = false
+      paused = false
+
+      let row = Math.random() * GRID | 0
+      for (let x = 0; x < GRID; x++) field[row][x] = null
+
+      figures = [{
+        shape: SHAPES[12],
+        color: COLORS[Math.random() * COLORS.length | 0],
+        homeX: 180,
+        homeY: 520 - 3 * CELL,
+        x: 180,
+        y: BASE_H + 140,
+        tx: 180,
+        ty: 520 - 3 * CELL,
+        vy: 0,
+        bounce: true,
+        scale: 0.85
       }]
-      return
-    }
-    if(y>350&&y<390){init();return}
+    })
+    return
   }
-  figures.forEach(f=>{
-    let b=bounds(f.shape)
-    if(x>f.x&&x<f.x+b.w*CELL&&y>f.y&&y<f.y+b.h*CELL){
-      dragging=f
-      f.scale = FIGURE_DRAG_SCALE
-      sound(500)
-      vibrate(10)
-    }
-  })
+
+  if (y > 350 && y < 390) {
+    paused = true
+    showRewardAd(() => {
+      paused = false
+      init()
+    })
+    return
+  }
 }
+
+figures.forEach(f => {
+  let b = bounds(f.shape)
+  if (x > f.x && x < f.x + b.w * CELL && y > f.y && y < f.y + b.h * CELL) {
+    dragging = f
+    f.scale = FIGURE_DRAG_SCALE
+    sound(500)
+    vibrate(10)
+  }
+})
 
 c.onpointermove=e=>{
   if(!dragging||paused) return
