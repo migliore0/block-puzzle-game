@@ -1,3 +1,30 @@
+let adShowing = false
+
+function showFullscreenAd(onClose) {
+  if (!window.ysdk || adShowing) {
+    onClose && onClose()
+    return
+  }
+
+  adShowing = true
+  paused = true
+
+  ysdk.adv.showFullscreenAdv({
+    callbacks: {
+      onClose: () => {
+        adShowing = false
+        paused = false
+        onClose && onClose()
+      },
+      onError: () => {
+        adShowing = false
+        paused = false
+        onClose && onClose()
+      }
+    }
+  })
+}
+
 const FIGURE_IDLE_SCALE = 0.6
 const FIGURE_DRAG_SCALE = 1  
 
