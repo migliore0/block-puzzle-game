@@ -365,11 +365,20 @@ ctx.translate(
     ctx.restore()
   })
 
-  visualScore+=(score-visualScore)*0.2
-  ctx.fillStyle="#333"
-  ctx.font="600 36px Arial"
-  ctx.textAlign="center"
-  ctx.fillText(Math.floor(visualScore),BASE_W/2,70)
+  visualScore += (score - visualScore) * 0.2
+
+if (visualScore >= score - 0.5) {
+  const v = Math.floor(visualScore)
+  if (v > best) {
+    best = v
+    localStorage.best = best
+  }
+}
+
+ctx.fillStyle="#333"
+ctx.font="600 36px Arial"
+ctx.textAlign="center"
+ctx.fillText(Math.floor(visualScore), BASE_W/2, 70)
 
   ctx.font="14px Arial"
   ctx.textAlign="left"
@@ -517,8 +526,6 @@ c.onpointerup = () => {
     })
 
     score += f.shape.length * 10
-    best = Math.max(best, score)
-    localStorage.best = best
 
     clearLines()
 
