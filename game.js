@@ -33,15 +33,17 @@ function showRewardAd(onReward) {
 
   adShowing = true
   paused = true
+  let rewarded = false
 
   ysdk.adv.showRewardedVideo({
     callbacks: {
       onRewarded: () => {
-        onReward && onReward()
+        rewarded = true
       },
       onClose: () => {
         adShowing = false
         paused = false
+        if (rewarded && onReward) onReward()
       },
       onError: () => {
         adShowing = false
