@@ -25,6 +25,33 @@ function showFullscreenAd(onClose) {
   })
 }
 
+function showRewardAd(onReward) {
+  if (!window.ysdk || adShowing) {
+    onReward && onReward()
+    return
+  }
+
+  adShowing = true
+  paused = true
+
+  ysdk.adv.showRewardedVideo({
+    callbacks: {
+      onRewarded: () => {
+        onReward && onReward()
+      },
+      onClose: () => {
+        adShowing = false
+        paused = false
+      },
+      onError: () => {
+        adShowing = false
+        paused = false
+        onReward && onReward()
+      }
+    }
+  })
+}
+
 const FIGURE_IDLE_SCALE = 0.6
 const FIGURE_DRAG_SCALE = 1  
 
@@ -561,8 +588,6 @@ if (!figures.length) spawnSet()
 if (figures.length && !anyMoves()) {
   showGameOver = true
   paused = true
-
-  showFullscreenAd()
 }
 
     sound(220)
