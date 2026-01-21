@@ -9,6 +9,15 @@
 </head>
 <body>
 <canvas id="game"></canvas>
+
+<script>
+  let ysdk = null
+
+  YaGames.init().then(sdk => {
+    ysdk = sdk
+  })
+</script>
+
 <script src="game.js"></script>
 </body>
 </html>
