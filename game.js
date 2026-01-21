@@ -534,7 +534,7 @@ c.onpointerdown=e=>{
 
   if (y > 350 && y < 390) {
     paused = true
-    showRewardAd(() => {
+    showFullscreenAd(() => {
       paused = false
       init()
     })
