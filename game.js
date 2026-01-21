@@ -561,6 +561,8 @@ if (!figures.length) spawnSet()
 if (figures.length && !anyMoves()) {
   showGameOver = true
   paused = true
+
+  showFullscreenAd()
 }
 
     sound(220)
